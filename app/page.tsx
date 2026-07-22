@@ -2,114 +2,118 @@
 
 import Link from "next/link";
 
-
 const servicos = [
-  {
-    nome: "Barba",
-    valor: "R$ 25,00",
-  },
-  {
-    nome: "Barba + Pezinho",
-    valor: "R$ 30,00",
-  },
-  {
-    nome: "Corte + Alisamento",
-    valor: "R$ 70,00",
-  },
-  {
-    nome: "Corte + Barba",
-    valor: "R$ 50,00",
-  },
-  {
-    nome: "Corte + Barba + Luzes Alinhada",
-    valor: "R$ 100,00",
-  },
-  {
-    nome: "Corte + Pigmentação",
-    valor: "R$ 60,00",
-  },
-  {
-    nome: "Navalhado",
-    valor: "R$ 35,00",
-  },
-  {
-    nome: "Corte Social",
-    valor: "R$ 25,00",
-  },
-  {
-    nome: "Nevou + Corte",
-    valor: "R$ 120,00",
-  },
+  { nome: "Barba", valor: "R$ 25,00" },
+  { nome: "Barba + Pezinho", valor: "R$ 30,00" },
+  { nome: "Corte + Alisamento", valor: "R$ 70,00" },
+  { nome: "Corte + Barba", valor: "R$ 50,00" },
+  { nome: "Corte + Pigmentação", valor: "R$ 60,00" },
+  { nome: "Navalhado", valor: "R$ 35,00" },
+  { nome: "Corte Social", valor: "R$ 25,00" },
 ];
-
 
 export default function Home() {
 
   return (
 
-    <main className="min-h-screen bg-gray-100">
+    <main className="min-h-screen bg-gray-100 pb-20">
 
 
-      <section className="relative bg-black text-white p-12 text-center">
+      {/* Tela inicial estilo aplicativo */}
+
+      <section className="bg-black text-white p-10 text-center rounded-b-3xl">
 
 
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/90"></div>
-
-
-        <div className="relative z-10">
-
-
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Barbearia Mateus Santos 💈
-          </h1>
-
-
-          <p className="text-lg">
-            Cortes modernos, barba e transformação no seu estilo.
-          </p>
-
-
-          <Link
-            href="/agendar"
-            className="inline-block mt-6 bg-green-600 px-8 py-3 rounded-lg font-bold"
-          >
-            Agendar horário
-          </Link>
-
-
+        <div className="text-6xl mb-4">
+          💈
         </div>
+
+
+        <h1 className="text-3xl font-bold">
+          Mateus Santos
+        </h1>
+
+
+        <h2 className="text-xl">
+          Barbershop
+        </h2>
+
+
+        <p className="mt-4 text-gray-300">
+          Seu estilo, nosso cuidado.
+        </p>
+
+
+
+        <Link
+          href="/agendar"
+          className="block mt-8 bg-green-600 p-4 rounded-xl font-bold text-lg"
+        >
+          ✂️ Agendar horário
+        </Link>
 
 
       </section>
 
 
 
-      <section className="p-8 max-w-5xl mx-auto">
+      {/* Atalhos do app */}
+
+      <section className="p-5 grid grid-cols-2 gap-4">
 
 
-        <h2 className="text-3xl font-bold text-center mb-8">
-          ✂️ Nossos Serviços
+        <Link
+          href="/meus-agendamentos"
+          className="bg-white shadow rounded-xl p-5 text-center font-bold"
+        >
+          📅
+          <br />
+          Meus horários
+        </Link>
+
+
+
+        <Link
+          href="/servicos"
+          className="bg-white shadow rounded-xl p-5 text-center font-bold"
+        >
+          ✂️
+          <br />
+          Serviços
+        </Link>
+
+
+      </section>
+
+
+
+
+      <section className="p-5">
+
+
+        <h2 className="text-2xl font-bold mb-5 text-center">
+          Nossos serviços
         </h2>
 
 
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid gap-4">
 
 
-          {servicos.map((servico) => (
+          {servicos.map((servico)=>(
 
             <div
               key={servico.nome}
-              className="bg-white rounded-lg shadow p-5 text-center"
+              className="bg-white rounded-xl shadow p-5 flex justify-between"
             >
 
-              <h3 className="text-xl font-bold">
+              <span className="font-bold">
                 {servico.nome}
-              </h3>
+              </span>
 
 
-              <p className="text-green-600 text-2xl font-bold mt-3">
+              <span className="text-green-600 font-bold">
                 {servico.valor}
-              </p>
+              </span>
 
 
             </div>
@@ -122,21 +126,22 @@ export default function Home() {
 
       </section>
 
-            <section className="bg-gray-200 p-8 text-center">
 
-        <h2 className="text-2xl font-bold mb-4">
-          📍 Nossa localização
+
+
+      <section className="bg-gray-200 p-6 text-center">
+
+
+        <h2 className="text-xl font-bold">
+          📍 Localização
         </h2>
 
 
-        <p className="text-lg font-bold">
-          Barbearia Mateus Santos
-        </p>
-
-
-        <p className="mb-6">
-          Rua Vinte e Cinco de Dezembro, N° 8<br />
-          Bairro Retiro Saudoso<br />
+        <p className="mt-3">
+          Rua Vinte e Cinco de Dezembro, N° 8
+          <br/>
+          Retiro Saudoso
+          <br/>
           Cariacica - ES
         </p>
 
@@ -144,9 +149,9 @@ export default function Home() {
         <a
           href="https://www.google.com/maps/search/?api=1&query=Rua+Vinte+e+Cinco+de+Dezembro+n8+Retiro+Saudoso+Cariacica+ES"
           target="_blank"
-          className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold"
+          className="inline-block mt-5 bg-blue-600 text-white p-3 rounded-xl font-bold"
         >
-          📍 Abrir no Google Maps
+          Abrir localização
         </a>
 
 
@@ -155,26 +160,20 @@ export default function Home() {
 
 
 
-      <section className="bg-white p-8 text-center">
+      <section className="p-6 text-center">
 
 
-        <h2 className="text-2xl font-bold mb-4">
-          📲 Fale conosco
+        <h2 className="font-bold text-xl">
+          📲 WhatsApp
         </h2>
-
-
-        <p className="mb-5">
-          Tire dúvidas ou agende seu horário pelo WhatsApp.
-        </p>
-
 
 
         <a
           href="https://wa.me/SEUNUMERO"
           target="_blank"
-          className="bg-green-600 text-white px-8 py-3 rounded-lg font-bold"
+          className="inline-block mt-4 bg-green-600 text-white px-8 py-3 rounded-xl font-bold"
         >
-          WhatsApp
+          Falar agora
         </a>
 
 
@@ -182,16 +181,13 @@ export default function Home() {
 
 
 
-
-      <footer className="bg-black text-white text-center p-4">
-
-        © Barbearia Mateus Santos 💈
-
+      <footer className="bg-black text-white text-center p-5">
+        © Mateus Santos Barbershop 💈
       </footer>
+
 
 
     </main>
 
   );
-
 }

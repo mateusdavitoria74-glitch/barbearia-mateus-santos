@@ -64,7 +64,7 @@ export default function Painel() {
       `📅 Data: ${agendamento.data}\n` +
       `⏰ Horário: ${agendamento.horario}\n` +
       `✂️ Serviço: ${agendamento.servico}\n` +
-      `💰 Valor: R$ ${agendamento.valor},00\n\n` +
+      `💰 Valor: R$ ${agendamento.valor || 0},00\n\n` +
       `Obrigado pela preferência!`;
 
 
@@ -121,17 +121,22 @@ export default function Painel() {
 
   const faturamento = agendamentos
     .filter((a) => a.status === "Confirmado")
-    .reduce(
-      (total, a) => total + Number(a.valor || 0),
-      0
-    );
+    .reduce((total, a) => {
+
+      const valor = String(a.valor || "")
+        .replace("R$", "")
+        .replace(",", ".")
+        .trim();
+
+      return total + Number(valor || 0);
+
+    }, 0);
 
 
   const ticketMedio =
     totalConfirmados > 0
       ? faturamento / totalConfirmados
       : 0;
-
 
 
   return (
@@ -141,9 +146,8 @@ export default function Painel() {
         Painel da Barbearia
       </h1>
 
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 mb-8">
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 mb-8">
 
         <div className="bg-white rounded-lg shadow p-4 text-center">
 
@@ -156,7 +160,6 @@ export default function Painel() {
           </h2>
 
         </div>
-
 
 
         <div className="bg-white rounded-lg shadow p-4 text-center">
@@ -172,7 +175,6 @@ export default function Painel() {
         </div>
 
 
-
         <div className="bg-white rounded-lg shadow p-4 text-center">
 
           <p className="text-gray-500">
@@ -185,13 +187,9 @@ export default function Painel() {
 
         </div>
 
-
       </div>
 
-
-
-      <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-8">
-
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-8">
 
         <div className="bg-white rounded-lg shadow p-4 text-center">
 
@@ -206,7 +204,6 @@ export default function Painel() {
         </div>
 
 
-
         <div className="bg-white rounded-lg shadow p-4 text-center">
 
           <p className="text-gray-500">
@@ -219,9 +216,7 @@ export default function Painel() {
 
         </div>
 
-
       </div>
-
 
 
 
@@ -231,9 +226,7 @@ export default function Painel() {
           Carregando...
         </div>
 
-
       ) : (
-
 
         <div className="max-w-4xl mx-auto mt-8 grid gap-8">
 
@@ -247,16 +240,13 @@ export default function Painel() {
 
             <div className="grid gap-3">
 
-
               {clientes.length === 0 ? (
 
                 <div className="bg-white p-4 rounded shadow">
                   Nenhum cliente cadastrado.
                 </div>
 
-
               ) : (
-
 
                 clientes.map((cliente) => (
 
@@ -269,11 +259,9 @@ export default function Painel() {
                       👤 {cliente.nome}
                     </p>
 
-
                     <p>
                       📱 {cliente.telefone}
                     </p>
-
 
                   </div>
 
@@ -281,13 +269,12 @@ export default function Painel() {
 
               )}
 
-
             </div>
-
 
           </section>
 
-          
+
+
           <section>
 
             <h2 className="text-2xl font-bold mb-4">
@@ -300,7 +287,6 @@ export default function Painel() {
               <div className="bg-white p-6 rounded shadow">
                 Nenhum agendamento.
               </div>
-
 
             ) : (
 
@@ -327,7 +313,13 @@ export default function Painel() {
 
 
                   <p>
-                    💰 Valor: R$ {agendamento.valor}
+                    💰 Valor: R$ {
+                      Number(
+                        String(agendamento.valor || 0)
+                          .replace("R$", "")
+                          .replace(",", ".")
+                      ).toFixed(2)
+                    }
                   </p>
 
 
@@ -356,11 +348,9 @@ export default function Painel() {
 
 
 
-
                   {agendamento.status === "Agendado" && (
 
                     <div className="grid gap-2 mt-4">
-
 
                       <button
                         onClick={() =>
@@ -375,7 +365,6 @@ export default function Painel() {
                       </button>
 
 
-
                       <button
                         onClick={() =>
                           mudarStatus(
@@ -388,11 +377,9 @@ export default function Painel() {
                         Cancelar
                       </button>
 
-
                     </div>
 
                   )}
-
 
 
 
@@ -406,7 +393,6 @@ export default function Painel() {
 
 
 
-
                   {agendamento.status === "Cancelado" && (
 
                     <div className="mt-4 bg-red-600 text-white p-3 rounded text-center">
@@ -415,13 +401,11 @@ export default function Painel() {
 
                   )}
 
-
                 </div>
 
               ))
 
             )}
-
 
           </section>
 
@@ -430,9 +414,7 @@ export default function Painel() {
 
       )}
 
-
     </main>
-
   );
 
 }
