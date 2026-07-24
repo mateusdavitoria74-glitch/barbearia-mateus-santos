@@ -495,7 +495,18 @@ export default function Painel() {
 
 
               agendamentos
-  .filter((agendamento) => agendamento.status !== "Finalizado")
+  .filter((agendamento) => {
+
+    const hoje = new Date()
+      .toISOString()
+      .split("T")[0];
+
+    return (
+      agendamento.data >= hoje &&
+      agendamento.status?.toLowerCase() !== "finalizado"
+    );
+
+  })
   .map((agendamento) => (
 
 
