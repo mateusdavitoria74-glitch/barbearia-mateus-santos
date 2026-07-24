@@ -23,10 +23,6 @@ export default function Painel() {
   const [carregando, setCarregando] = useState(true);
 
 
-  // ===============================
-  // BLOQUEIO DE HORÁRIOS
-  // ===============================
-
   const [dataBloqueio, setDataBloqueio] = useState("");
   const [inicioBloqueio, setInicioBloqueio] = useState("");
   const [fimBloqueio, setFimBloqueio] = useState("");
@@ -46,23 +42,14 @@ export default function Painel() {
         await listarClientes();
 
 
-      setAgendamentos(
-        dadosAgendamentos
-      );
+      setAgendamentos(dadosAgendamentos);
 
-
-      setClientes(
-        dadosClientes
-      );
+      setClientes(dadosClientes);
 
 
     } catch (erro) {
 
-      console.log(
-        "Erro:",
-        erro
-      );
-
+      console.log("Erro:", erro);
 
     } finally {
 
@@ -84,7 +71,6 @@ export default function Painel() {
       status
     );
 
-
     carregarDados();
 
   }
@@ -100,9 +86,7 @@ export default function Painel() {
       !fimBloqueio
     ) {
 
-      alert(
-        "Preencha data e horários"
-      );
+      alert("Preencha data e horários");
 
       return;
 
@@ -126,9 +110,7 @@ export default function Painel() {
 
 
 
-    alert(
-      "Horário bloqueado com sucesso!"
-    );
+    alert("Horário bloqueado com sucesso!");
 
 
     setDataBloqueio("");
@@ -141,14 +123,12 @@ export default function Painel() {
 
 
   function abrirWhatsApp(
-    agendamento: any
-  ) {
-
+    agendamento:any
+  ){
 
     const numero =
       agendamento.telefone
-      ?.replace(/\D/g, "");
-
+      ?.replace(/\D/g,"");
 
 
     const mensagem =
@@ -157,19 +137,13 @@ export default function Painel() {
       `📅 Data: ${agendamento.data}\n` +
       `⏰ Horário: ${agendamento.horario}\n` +
       `✂️ Serviço: ${agendamento.servico}\n` +
-      `💰 Valor: R$ ${agendamento.valor},00\n\n` +
-      `Obrigado pela preferência!`;
-
+      `💰 Valor: R$ ${agendamento.valor},00`;
 
 
     window.open(
-
       `https://wa.me/55${numero}?text=${encodeURIComponent(mensagem)}`,
-
       "_blank"
-
     );
-
 
   }
 
@@ -177,40 +151,31 @@ export default function Painel() {
 
   useEffect(() => {
 
-
     const verificarUsuario =
       onAuthStateChanged(
         auth,
-        (usuario) => {
+        (usuario)=>{
 
 
-          if (!usuario) {
-
+          if(!usuario){
 
             router.push("/login");
 
-
-          } else {
-
+          }else{
 
             carregarDados();
 
-
           }
 
-
         }
-
       );
-
 
 
     return () =>
       verificarUsuario();
 
 
-
-  }, [router]);
+  },[router]);
 
 
 
@@ -224,21 +189,21 @@ export default function Painel() {
 
 
   const totalConfirmados =
-  agendamentos.filter(
-    (a) =>
-      a.status?.toLowerCase() === "confirmado"
-  ).length;
+    agendamentos.filter(
+      (a)=>
+        a.status?.toLowerCase()==="confirmado"
+    ).length;
 
 
 
   const faturamento =
-  agendamentos
+    agendamentos
     .filter(
-      (a) =>
-        a.status?.toLowerCase() === "confirmado"
+      (a)=>
+        a.status?.toLowerCase()==="confirmado"
     )
     .reduce(
-      (total, a) =>
+      (total,a)=>
         total + Number(a.valor || 0),
       0
     );
@@ -250,7 +215,32 @@ export default function Painel() {
       ? faturamento / totalConfirmados
       : 0;
 
-        return (
+
+
+  const hoje =
+    new Date()
+    .toISOString()
+    .split("T")[0];
+
+
+
+  const agendamentosHoje =
+    agendamentos.filter(
+      (agendamento)=>
+        agendamento.data === hoje &&
+        agendamento.status?.toLowerCase() !== "finalizado"
+    );
+
+
+
+  const proximosAgendamentos =
+    agendamentos.filter(
+      (agendamento)=>
+        agendamento.data > hoje &&
+        agendamento.status?.toLowerCase() !== "finalizado"
+    );
+
+      return (
 
     <main className="min-h-screen bg-gray-100 p-8">
 
@@ -309,6 +299,7 @@ export default function Painel() {
 
 
 
+
       <div className="grid grid-cols-2 gap-4 mb-8">
 
 
@@ -344,7 +335,6 @@ export default function Painel() {
 
 
 
-      {/* BLOQUEIO DE HORÁRIO */}
 
       <section className="bg-white p-6 rounded-lg shadow mb-8">
 
@@ -357,7 +347,7 @@ export default function Painel() {
           type="date"
           className="w-full border p-3 rounded mb-3"
           value={dataBloqueio}
-          onChange={(e) =>
+          onChange={(e)=>
             setDataBloqueio(e.target.value)
           }
         />
@@ -367,7 +357,7 @@ export default function Painel() {
           type="time"
           className="w-full border p-3 rounded mb-3"
           value={inicioBloqueio}
-          onChange={(e) =>
+          onChange={(e)=>
             setInicioBloqueio(e.target.value)
           }
         />
@@ -377,7 +367,7 @@ export default function Painel() {
           type="time"
           className="w-full border p-3 rounded mb-3"
           value={fimBloqueio}
-          onChange={(e) =>
+          onChange={(e)=>
             setFimBloqueio(e.target.value)
           }
         />
@@ -387,7 +377,7 @@ export default function Painel() {
           className="w-full border p-3 rounded mb-3"
           placeholder="Motivo"
           value={motivoBloqueio}
-          onChange={(e) =>
+          onChange={(e)=>
             setMotivoBloqueio(e.target.value)
           }
         />
@@ -409,7 +399,6 @@ export default function Painel() {
 
       {carregando ? (
 
-
         <div className="text-center mt-8">
           Carregando...
         </div>
@@ -423,9 +412,11 @@ export default function Painel() {
 
           <section>
 
+
             <h2 className="text-2xl font-bold mb-4">
               👥 Clientes cadastrados
             </h2>
+
 
 
             <div className="grid gap-3">
@@ -441,7 +432,7 @@ export default function Painel() {
               ) : (
 
 
-                clientes.map((cliente) => (
+                clientes.map((cliente)=>(
 
                   <div
                     key={cliente.id}
@@ -482,181 +473,191 @@ export default function Painel() {
             </h2>
 
 
+            <h3 className="font-bold mb-3">
+              📍 Hoje
+            </h3>
 
-            {agendamentos.length === 0 ? (
+
+            {agendamentosHoje.length === 0 && (
+
+              <div className="bg-white p-4 rounded shadow mb-5">
+                Nenhum agendamento hoje.
+              </div>
+
+            )}
+
+                        {[...agendamentosHoje, ...proximosAgendamentos]
+            .map((agendamento)=>(
 
 
-              <div className="bg-white p-6 rounded shadow">
-                Nenhum agendamento.
+              <div
+                key={agendamento.id}
+                className="bg-white p-6 rounded-lg shadow mb-4"
+              >
+
+
+                <h3 className="text-xl font-bold">
+                  👤 {agendamento.nome}
+                </h3>
+
+
+                <p>
+                  📱 {agendamento.telefone}
+                </p>
+
+
+                <p>
+                  ✂️ {agendamento.servico}
+                </p>
+
+
+                <p>
+                  💰 Valor: R$ {agendamento.valor}
+                </p>
+
+
+                <p>
+                  📅 {agendamento.data}
+                </p>
+
+
+                <p>
+                  ⏰ {agendamento.horario}
+                </p>
+
+
+                <p>
+                  Status: {agendamento.status}
+                </p>
+
+
+
+                <button
+                  onClick={() =>
+                    abrirWhatsApp(agendamento)
+                  }
+                  className="bg-green-500 text-white p-3 rounded mt-3 w-full"
+                >
+                  📲 Confirmar no WhatsApp
+                </button>
+
+
+
+
+
+                {agendamento.status?.toLowerCase() === "agendado" && (
+
+                  <div className="grid gap-2 mt-4">
+
+
+                    <button
+                      onClick={() =>
+                        mudarStatus(
+                          agendamento.id,
+                          "Confirmado"
+                        )
+                      }
+                      className="bg-green-600 text-white p-3 rounded"
+                    >
+                      Confirmar corte
+                    </button>
+
+
+
+                    <button
+                      onClick={() =>
+                        mudarStatus(
+                          agendamento.id,
+                          "Cancelado"
+                        )
+                      }
+                      className="bg-red-600 text-white p-3 rounded"
+                    >
+                      Cancelar
+                    </button>
+
+
+                  </div>
+
+                )}
+
+
+
+
+
+                {agendamento.status?.toLowerCase() === "confirmado" && (
+
+                  <div className="grid gap-2 mt-4">
+
+
+                    <div className="bg-blue-600 text-white p-3 rounded text-center">
+                      Corte confirmado ✅
+                    </div>
+
+
+
+                    <button
+                      onClick={() =>
+                        mudarStatus(
+                          agendamento.id,
+                          "Finalizado"
+                        )
+                      }
+                      className="bg-green-700 hover:bg-green-800 text-white p-3 rounded"
+                    >
+                      ✅ Finalizar Corte
+                    </button>
+
+
+                  </div>
+
+                )}
+
+
+
+
+
+                {agendamento.status?.toLowerCase() === "finalizado" && (
+
+                  <div className="mt-4 bg-green-700 text-white p-3 rounded text-center">
+                    Corte finalizado ✅
+                  </div>
+
+                )}
+
+
+
+
+
+                {agendamento.status?.toLowerCase() === "cancelado" && (
+
+                  <div className="mt-4 bg-red-600 text-white p-3 rounded text-center">
+                    Cancelado ❌
+                  </div>
+
+                )}
+
+
+
               </div>
 
 
-            ) : (
+            ))}
 
 
-              agendamentos
-  .filter((agendamento) => {
 
-    const hoje = new Date()
-      .toISOString()
-      .split("T")[0];
 
-    return (
-      agendamento.data >= hoje &&
-      agendamento.status?.toLowerCase() !== "finalizado"
-    );
 
-  })
-  .map((agendamento) => (
+            <h3 className="font-bold mt-8 mb-3">
+              📅 Próximos agendamentos
+            </h3>
 
 
-                <div
-                  key={agendamento.id}
-                  className="bg-white p-6 rounded-lg shadow mb-4"
-                >
+            {proximosAgendamentos.length === 0 && (
 
-
-                  <h3 className="text-xl font-bold">
-                    👤 {agendamento.nome}
-                  </h3>
-
-
-                  <p>
-                    📱 {agendamento.telefone}
-                  </p>
-
-
-                  <p>
-                    ✂️ {agendamento.servico}
-                  </p>
-
-
-                  <p>
-                    💰 Valor: R$ {agendamento.valor}
-                  </p>
-
-
-                  <p>
-                    📅 {agendamento.data}
-                  </p>
-
-
-                  <p>
-                    ⏰ {agendamento.horario}
-                  </p>
-
-
-                  <p>
-                    Status: {agendamento.status}
-                  </p>
-
-
-
-
-                  <button
-                    onClick={() =>
-                      abrirWhatsApp(agendamento)
-                    }
-                    className="bg-green-500 text-white p-3 rounded mt-3"
-                  >
-                    📲 Confirmar no WhatsApp
-                  </button>
-
-
-
-
-
-                  {agendamento.status?.toLowerCase() === "agendado" && (
-
-                    <div className="grid gap-2 mt-4">
-
-
-                      <button
-                        onClick={() =>
-                          mudarStatus(
-                            agendamento.id,
-                            "Confirmado"
-                          )
-                        }
-                        className="bg-green-600 text-white p-3 rounded"
-                      >
-                        Confirmar corte
-                      </button>
-
-
-
-                      <button
-                        onClick={() =>
-                          mudarStatus(
-                            agendamento.id,
-                            "Cancelado"
-                          )
-                        }
-                        className="bg-red-600 text-white p-3 rounded"
-                      >
-                        Cancelar
-                      </button>
-
-
-                    </div>
-
-                  )}
-
-
-
-
-
-
-                  {agendamento.status?.toLowerCase() === "confirmado" && (
-
-  <div className="grid gap-2 mt-4">
-
-    <div className="bg-blue-600 text-white p-3 rounded text-center">
-      Corte confirmado ✅
-    </div>
-
-    <button
-      onClick={() =>
-        mudarStatus(
-          agendamento.id,
-          "Finalizado"
-        )
-      }
-      className="bg-green-700 hover:bg-green-800 text-white p-3 rounded"
-    >
-      ✅ Finalizar Corte
-    </button>
-
-  </div>
-
-)}
-
-{agendamento.status?.toLowerCase() === "finalizado" && (
-
-  <div className="mt-4 bg-green-700 text-white p-3 rounded text-center">
-    Corte finalizado ✅
-  </div>
-
-)}
-
-
-
-
-
-
-                  {agendamento.status?.toLowerCase() === "cancelado" && (
-
-                    <div className="mt-4 bg-red-600 text-white p-3 rounded text-center">
-                      Cancelado ❌
-                    </div>
-
-                  )}
-
-
-                </div>
-
-
-              ))
+              <div className="bg-white p-4 rounded shadow">
+                Nenhum próximo agendamento.
+              </div>
 
             )}
 
