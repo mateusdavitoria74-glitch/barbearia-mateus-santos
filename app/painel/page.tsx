@@ -596,7 +596,7 @@ export default function Painel() {
 
 
 
-                  {true && (
+                  {agendamento.status?.toLowerCase() === "confirmado" && (
 
   <div className="grid gap-2 mt-4">
 

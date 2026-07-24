@@ -1,6 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
 
 const servicos = [
   { nome: "Barba", valor: "R$ 25,00" },
@@ -13,6 +17,32 @@ const servicos = [
 ];
 
 export default function Home() {
+
+  const router = useRouter();
+
+
+useEffect(() => {
+
+  const verificarUsuario = onAuthStateChanged(
+    auth,
+    (usuario) => {
+
+      if (
+        usuario &&
+        usuario.email === "mateusdavitoria74@gmail.com"
+      ) {
+
+        router.push("/painel");
+
+      }
+
+    }
+  );
+
+
+  return () => verificarUsuario();
+
+}, [router]);
 
   return (
 
