@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -62,14 +63,15 @@ export default function Painel() {
 
 
   async function mudarStatus(
-    id: string,
-    status: string
-  ) {
+    id:string,
+    status:string
+  ){
 
     await atualizarStatusAgendamento(
       id,
       status
     );
+
 
     carregarDados();
 
@@ -77,16 +79,18 @@ export default function Painel() {
 
 
 
-  async function bloquearHorario() {
+  async function bloquearHorario(){
 
 
-    if (
+    if(
       !dataBloqueio ||
       !inicioBloqueio ||
       !fimBloqueio
-    ) {
+    ){
 
-      alert("Preencha data e horários");
+      alert(
+        "Preencha data e horários"
+      );
 
       return;
 
@@ -96,11 +100,11 @@ export default function Painel() {
 
     await salvarBloqueio({
 
-      data: dataBloqueio,
+      data:dataBloqueio,
 
-      inicio: inicioBloqueio,
+      inicio:inicioBloqueio,
 
-      fim: fimBloqueio,
+      fim:fimBloqueio,
 
       motivo:
         motivoBloqueio ||
@@ -110,7 +114,9 @@ export default function Painel() {
 
 
 
-    alert("Horário bloqueado com sucesso!");
+    alert(
+      "Horário bloqueado com sucesso!"
+    );
 
 
     setDataBloqueio("");
@@ -119,6 +125,7 @@ export default function Painel() {
     setMotivoBloqueio("");
 
   }
+
 
 
 
@@ -132,12 +139,13 @@ export default function Painel() {
 
 
     const mensagem =
-      `Olá ${agendamento.nome}! 💈\n\n` +
-      `Seu horário na Barbearia Mateus Santos está confirmado.\n\n` +
-      `📅 Data: ${agendamento.data}\n` +
-      `⏰ Horário: ${agendamento.horario}\n` +
-      `✂️ Serviço: ${agendamento.servico}\n` +
+      `Olá ${agendamento.nome}! 💈\n\n`+
+      `Seu horário na Barbearia Mateus Santos está confirmado.\n\n`+
+      `📅 Data: ${agendamento.data}\n`+
+      `⏰ Horário: ${agendamento.horario}\n`+
+      `✂️ Serviço: ${agendamento.servico}\n`+
       `💰 Valor: R$ ${agendamento.valor},00`;
+
 
 
     window.open(
@@ -149,7 +157,8 @@ export default function Painel() {
 
 
 
-  useEffect(() => {
+  useEffect(()=>{
+
 
     const verificarUsuario =
       onAuthStateChanged(
@@ -167,6 +176,7 @@ export default function Painel() {
 
           }
 
+
         }
       );
 
@@ -176,6 +186,7 @@ export default function Painel() {
 
 
   },[router]);
+
 
 
 
@@ -245,13 +256,49 @@ export default function Painel() {
     <main className="min-h-screen bg-gray-100 p-8">
 
 
-      <h1 className="text-3xl font-bold text-center">
-        Painel da Barbearia
-      </h1>
+      {/* PERFIL ADMINISTRADOR */}
+
+      <div className="bg-black text-white rounded-2xl p-8 text-center mb-8 shadow-lg">
+
+
+        <div className="text-6xl mb-3">
+          👤
+        </div>
+
+
+        <h1 className="text-3xl font-bold">
+          Mateus Santos
+        </h1>
+
+
+        <p className="text-xl">
+          💈 Administrador
+        </p>
+
+
+        <p className="text-gray-300 mt-2">
+          Barbearia Mateus Santos
+        </p>
 
 
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 mb-8">
+        <Link
+          href="/painel/configuracoes"
+          className="mt-5 bg-white text-black px-6 py-3 rounded-xl font-bold inline-block"
+        >
+          ⚙️ Configurações
+        </Link>
+
+
+      </div>
+
+
+
+
+
+      {/* CARDS */}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
 
         <div className="bg-white rounded-lg shadow p-4 text-center">
@@ -259,6 +306,7 @@ export default function Painel() {
           <p className="text-gray-500">
             💰 Faturamento
           </p>
+
 
           <h2 className="text-3xl font-bold text-green-600">
             R$ {faturamento.toFixed(2)}
@@ -268,11 +316,13 @@ export default function Painel() {
 
 
 
+
         <div className="bg-white rounded-lg shadow p-4 text-center">
 
           <p className="text-gray-500">
             ✂️ Cortes confirmados
           </p>
+
 
           <h2 className="text-3xl font-bold">
             {totalConfirmados}
@@ -282,11 +332,14 @@ export default function Painel() {
 
 
 
+
+
         <div className="bg-white rounded-lg shadow p-4 text-center">
 
           <p className="text-gray-500">
             📈 Ticket médio
           </p>
+
 
           <h2 className="text-3xl font-bold">
             R$ {ticketMedio.toFixed(2)}
@@ -300,6 +353,8 @@ export default function Painel() {
 
 
 
+
+
       <div className="grid grid-cols-2 gap-4 mb-8">
 
 
@@ -309,6 +364,7 @@ export default function Painel() {
             👥 Clientes
           </p>
 
+
           <h2 className="text-3xl font-bold">
             {totalClientes}
           </h2>
@@ -317,11 +373,14 @@ export default function Painel() {
 
 
 
+
+
         <div className="bg-white rounded-lg shadow p-4 text-center">
 
           <p className="text-gray-500">
             📅 Agendamentos
           </p>
+
 
           <h2 className="text-3xl font-bold">
             {totalAgendamentos}
@@ -336,11 +395,16 @@ export default function Painel() {
 
 
 
+
+      {/* BLOQUEIO */}
+
       <section className="bg-white p-6 rounded-lg shadow mb-8">
+
 
         <h2 className="text-2xl font-bold mb-4">
           🔒 Bloquear horário
         </h2>
+
 
 
         <input
@@ -353,6 +417,7 @@ export default function Painel() {
         />
 
 
+
         <input
           type="time"
           className="w-full border p-3 rounded mb-3"
@@ -361,6 +426,7 @@ export default function Painel() {
             setInicioBloqueio(e.target.value)
           }
         />
+
 
 
         <input
@@ -373,6 +439,7 @@ export default function Painel() {
         />
 
 
+
         <input
           className="w-full border p-3 rounded mb-3"
           placeholder="Motivo"
@@ -381,6 +448,7 @@ export default function Painel() {
             setMotivoBloqueio(e.target.value)
           }
         />
+
 
 
         <button
@@ -393,11 +461,7 @@ export default function Painel() {
 
       </section>
 
-
-
-
-
-      {carregando ? (
+            {carregando ? (
 
         <div className="text-center mt-8">
           Carregando...
@@ -409,6 +473,9 @@ export default function Painel() {
 
         <div className="max-w-4xl mx-auto mt-8 grid gap-8">
 
+
+
+          {/* CLIENTES */}
 
           <section>
 
@@ -465,6 +532,8 @@ export default function Painel() {
 
 
 
+          {/* AGENDAMENTOS */}
+
           <section>
 
 
@@ -473,9 +542,12 @@ export default function Painel() {
             </h2>
 
 
+
+
             <h3 className="font-bold mb-3">
               📍 Hoje
             </h3>
+
 
 
             {agendamentosHoje.length === 0 && (
@@ -486,7 +558,12 @@ export default function Painel() {
 
             )}
 
-                        {[...agendamentosHoje, ...proximosAgendamentos]
+
+
+
+
+
+            {[...agendamentosHoje, ...proximosAgendamentos]
             .map((agendamento)=>(
 
 
@@ -501,9 +578,11 @@ export default function Painel() {
                 </h3>
 
 
+
                 <p>
                   📱 {agendamento.telefone}
                 </p>
+
 
 
                 <p>
@@ -511,9 +590,11 @@ export default function Painel() {
                 </p>
 
 
+
                 <p>
                   💰 Valor: R$ {agendamento.valor}
                 </p>
+
 
 
                 <p>
@@ -521,14 +602,18 @@ export default function Painel() {
                 </p>
 
 
+
                 <p>
                   ⏰ {agendamento.horario}
                 </p>
 
 
+
                 <p>
                   Status: {agendamento.status}
                 </p>
+
+
 
 
 
@@ -540,6 +625,7 @@ export default function Painel() {
                 >
                   📲 Confirmar no WhatsApp
                 </button>
+
 
 
 
@@ -564,6 +650,7 @@ export default function Painel() {
 
 
 
+
                     <button
                       onClick={() =>
                         mudarStatus(
@@ -585,6 +672,8 @@ export default function Painel() {
 
 
 
+
+
                 {agendamento.status?.toLowerCase() === "confirmado" && (
 
                   <div className="grid gap-2 mt-4">
@@ -593,6 +682,7 @@ export default function Painel() {
                     <div className="bg-blue-600 text-white p-3 rounded text-center">
                       Corte confirmado ✅
                     </div>
+
 
 
 
@@ -617,6 +707,8 @@ export default function Painel() {
 
 
 
+
+
                 {agendamento.status?.toLowerCase() === "finalizado" && (
 
                   <div className="mt-4 bg-green-700 text-white p-3 rounded text-center">
@@ -624,6 +716,7 @@ export default function Painel() {
                   </div>
 
                 )}
+
 
 
 
@@ -653,6 +746,7 @@ export default function Painel() {
             </h3>
 
 
+
             {proximosAgendamentos.length === 0 && (
 
               <div className="bg-white p-4 rounded shadow">
@@ -662,7 +756,9 @@ export default function Painel() {
             )}
 
 
+
           </section>
+
 
 
         </div>

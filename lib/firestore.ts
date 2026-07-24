@@ -7,6 +7,8 @@ import {
   doc,
   updateDoc,
   onSnapshot,
+  setDoc,
+  getDoc,
 } from "firebase/firestore";
 
 
@@ -307,5 +309,53 @@ export async function atualizarServico(
     servicoRef,
     dados
   );
+
+}
+
+// ===============================
+// PERFIL ADMINISTRADOR
+// ===============================
+
+
+export async function salvarPerfil(
+  dados:any
+){
+
+  await setDoc(
+    doc(
+      db,
+      "configuracoes",
+      "admin"
+    ),
+    dados,
+    {
+      merge:true
+    }
+  );
+
+}
+
+
+
+export async function buscarPerfil(){
+
+  const resultado =
+    await getDoc(
+      doc(
+        db,
+        "configuracoes",
+        "admin"
+      )
+    );
+
+
+  if(resultado.exists()){
+
+    return resultado.data();
+
+  }
+
+
+  return null;
 
 }
