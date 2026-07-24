@@ -9,6 +9,7 @@ import {
   listarAgendamentos,
   atualizarStatusAgendamento,
   listarClientes,
+  salvarBloqueio,
 } from "@/lib/firestore";
 
 
@@ -16,24 +17,52 @@ export default function Painel() {
 
   const router = useRouter();
 
+
   const [agendamentos, setAgendamentos] = useState<any[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(true);
+
+
+  // ===============================
+  // BLOQUEIO DE HORÁRIOS
+  // ===============================
+
+  const [dataBloqueio, setDataBloqueio] = useState("");
+  const [inicioBloqueio, setInicioBloqueio] = useState("");
+  const [fimBloqueio, setFimBloqueio] = useState("");
+  const [motivoBloqueio, setMotivoBloqueio] = useState("");
+
 
 
   async function carregarDados() {
 
     try {
 
-      const dadosAgendamentos = await listarAgendamentos();
-      const dadosClientes = await listarClientes();
+      const dadosAgendamentos =
+        await listarAgendamentos();
 
-      setAgendamentos(dadosAgendamentos);
-      setClientes(dadosClientes);
+
+      const dadosClientes =
+        await listarClientes();
+
+
+      setAgendamentos(
+        dadosAgendamentos
+      );
+
+
+      setClientes(
+        dadosClientes
+      );
+
 
     } catch (erro) {
 
-      console.log("Erro:", erro);
+      console.log(
+        "Erro:",
+        erro
+      );
+
 
     } finally {
 
@@ -44,18 +73,82 @@ export default function Painel() {
   }
 
 
-  async function mudarStatus(id: string, status: string) {
 
-    await atualizarStatusAgendamento(id, status);
+  async function mudarStatus(
+    id: string,
+    status: string
+  ) {
+
+    await atualizarStatusAgendamento(
+      id,
+      status
+    );
+
 
     carregarDados();
 
   }
 
 
-  function abrirWhatsApp(agendamento: any) {
 
-    const numero = agendamento.telefone?.replace(/\D/g, "");
+  async function bloquearHorario() {
+
+
+    if (
+      !dataBloqueio ||
+      !inicioBloqueio ||
+      !fimBloqueio
+    ) {
+
+      alert(
+        "Preencha data e horários"
+      );
+
+      return;
+
+    }
+
+
+
+    await salvarBloqueio({
+
+      data: dataBloqueio,
+
+      inicio: inicioBloqueio,
+
+      fim: fimBloqueio,
+
+      motivo:
+        motivoBloqueio ||
+        "Bloqueio manual",
+
+    });
+
+
+
+    alert(
+      "Horário bloqueado com sucesso!"
+    );
+
+
+    setDataBloqueio("");
+    setInicioBloqueio("");
+    setFimBloqueio("");
+    setMotivoBloqueio("");
+
+  }
+
+
+
+  function abrirWhatsApp(
+    agendamento: any
+  ) {
+
+
+    const numero =
+      agendamento.telefone
+      ?.replace(/\D/g, "");
+
 
 
     const mensagem =
@@ -64,14 +157,19 @@ export default function Painel() {
       `📅 Data: ${agendamento.data}\n` +
       `⏰ Horário: ${agendamento.horario}\n` +
       `✂️ Serviço: ${agendamento.servico}\n` +
-      `💰 Valor: R$ ${agendamento.valor || 0},00\n\n` +
+      `💰 Valor: R$ ${agendamento.valor},00\n\n` +
       `Obrigado pela preferência!`;
 
 
+
     window.open(
+
       `https://wa.me/55${numero}?text=${encodeURIComponent(mensagem)}`,
+
       "_blank"
+
     );
+
 
   }
 
@@ -79,58 +177,72 @@ export default function Painel() {
 
   useEffect(() => {
 
-    const verificarUsuario = onAuthStateChanged(
-      auth,
-      (usuario) => {
 
-        if (!usuario) {
+    const verificarUsuario =
+      onAuthStateChanged(
+        auth,
+        (usuario) => {
 
-          router.push("/login");
 
-        } else {
+          if (!usuario) {
 
-          carregarDados();
+
+            router.push("/login");
+
+
+          } else {
+
+
+            carregarDados();
+
+
+          }
+
 
         }
 
-      }
-    );
+      );
 
 
-    return () => verificarUsuario();
+
+    return () =>
+      verificarUsuario();
+
+
 
   }, [router]);
 
 
 
-  const totalClientes = clientes.length;
+  const totalClientes =
+    clientes.length;
 
 
-  const totalAgendamentos = agendamentos.length;
+  const totalAgendamentos =
+    agendamentos.length;
 
 
-  const totalConfirmados = agendamentos.filter(
-    (a) => a.status === "Confirmado"
+
+  const totalConfirmados =
+  agendamentos.filter(
+    (a) =>
+      a.status?.toLowerCase() === "confirmado"
   ).length;
 
 
-  const totalCancelados = agendamentos.filter(
-    (a) => a.status === "Cancelado"
-  ).length;
 
+  const faturamento =
+  agendamentos
+    .filter(
+      (a) =>
+        a.status?.toLowerCase() === "confirmado"
+    )
+    .reduce(
+      (total, a) =>
+        total + Number(a.valor || 0),
+      0
+    );
 
-  const faturamento = agendamentos
-    .filter((a) => a.status === "Confirmado")
-    .reduce((total, a) => {
-
-      const valor = String(a.valor || "")
-        .replace("R$", "")
-        .replace(",", ".")
-        .trim();
-
-      return total + Number(valor || 0);
-
-    }, 0);
 
 
   const ticketMedio =
@@ -138,16 +250,19 @@ export default function Painel() {
       ? faturamento / totalConfirmados
       : 0;
 
+        return (
 
-  return (
     <main className="min-h-screen bg-gray-100 p-8">
+
 
       <h1 className="text-3xl font-bold text-center">
         Painel da Barbearia
       </h1>
 
 
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 mb-8">
+
 
         <div className="bg-white rounded-lg shadow p-4 text-center">
 
@@ -160,6 +275,7 @@ export default function Painel() {
           </h2>
 
         </div>
+
 
 
         <div className="bg-white rounded-lg shadow p-4 text-center">
@@ -175,6 +291,7 @@ export default function Painel() {
         </div>
 
 
+
         <div className="bg-white rounded-lg shadow p-4 text-center">
 
           <p className="text-gray-500">
@@ -187,9 +304,13 @@ export default function Painel() {
 
         </div>
 
+
       </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-8">
+
+
+      <div className="grid grid-cols-2 gap-4 mb-8">
+
 
         <div className="bg-white rounded-lg shadow p-4 text-center">
 
@@ -204,6 +325,7 @@ export default function Painel() {
         </div>
 
 
+
         <div className="bg-white rounded-lg shadow p-4 text-center">
 
           <p className="text-gray-500">
@@ -216,17 +338,85 @@ export default function Painel() {
 
         </div>
 
+
       </div>
+
+
+
+
+      {/* BLOQUEIO DE HORÁRIO */}
+
+      <section className="bg-white p-6 rounded-lg shadow mb-8">
+
+        <h2 className="text-2xl font-bold mb-4">
+          🔒 Bloquear horário
+        </h2>
+
+
+        <input
+          type="date"
+          className="w-full border p-3 rounded mb-3"
+          value={dataBloqueio}
+          onChange={(e) =>
+            setDataBloqueio(e.target.value)
+          }
+        />
+
+
+        <input
+          type="time"
+          className="w-full border p-3 rounded mb-3"
+          value={inicioBloqueio}
+          onChange={(e) =>
+            setInicioBloqueio(e.target.value)
+          }
+        />
+
+
+        <input
+          type="time"
+          className="w-full border p-3 rounded mb-3"
+          value={fimBloqueio}
+          onChange={(e) =>
+            setFimBloqueio(e.target.value)
+          }
+        />
+
+
+        <input
+          className="w-full border p-3 rounded mb-3"
+          placeholder="Motivo"
+          value={motivoBloqueio}
+          onChange={(e) =>
+            setMotivoBloqueio(e.target.value)
+          }
+        />
+
+
+        <button
+          onClick={bloquearHorario}
+          className="w-full bg-black text-white p-3 rounded"
+        >
+          Bloquear horário
+        </button>
+
+
+      </section>
+
+
 
 
 
       {carregando ? (
 
+
         <div className="text-center mt-8">
           Carregando...
         </div>
 
+
       ) : (
+
 
         <div className="max-w-4xl mx-auto mt-8 grid gap-8">
 
@@ -240,13 +430,16 @@ export default function Painel() {
 
             <div className="grid gap-3">
 
+
               {clientes.length === 0 ? (
 
                 <div className="bg-white p-4 rounded shadow">
                   Nenhum cliente cadastrado.
                 </div>
 
+
               ) : (
+
 
                 clientes.map((cliente) => (
 
@@ -259,9 +452,11 @@ export default function Painel() {
                       👤 {cliente.nome}
                     </p>
 
+
                     <p>
                       📱 {cliente.telefone}
                     </p>
+
 
                   </div>
 
@@ -269,33 +464,46 @@ export default function Painel() {
 
               )}
 
+
             </div>
+
 
           </section>
 
 
 
+
+
           <section>
+
 
             <h2 className="text-2xl font-bold mb-4">
               📅 Agendamentos
             </h2>
 
 
+
             {agendamentos.length === 0 ? (
+
 
               <div className="bg-white p-6 rounded shadow">
                 Nenhum agendamento.
               </div>
 
+
             ) : (
 
-              agendamentos.map((agendamento) => (
+
+              agendamentos
+  .filter((agendamento) => agendamento.status !== "Finalizado")
+  .map((agendamento) => (
+
 
                 <div
                   key={agendamento.id}
                   className="bg-white p-6 rounded-lg shadow mb-4"
                 >
+
 
                   <h3 className="text-xl font-bold">
                     👤 {agendamento.nome}
@@ -313,13 +521,7 @@ export default function Painel() {
 
 
                   <p>
-                    💰 Valor: R$ {
-                      Number(
-                        String(agendamento.valor || 0)
-                          .replace("R$", "")
-                          .replace(",", ".")
-                      ).toFixed(2)
-                    }
+                    💰 Valor: R$ {agendamento.valor}
                   </p>
 
 
@@ -339,8 +541,11 @@ export default function Painel() {
 
 
 
+
                   <button
-                    onClick={() => abrirWhatsApp(agendamento)}
+                    onClick={() =>
+                      abrirWhatsApp(agendamento)
+                    }
                     className="bg-green-500 text-white p-3 rounded mt-3"
                   >
                     📲 Confirmar no WhatsApp
@@ -348,9 +553,12 @@ export default function Painel() {
 
 
 
-                  {agendamento.status === "Agendado" && (
+
+
+                  {agendamento.status?.toLowerCase() === "agendado" && (
 
                     <div className="grid gap-2 mt-4">
+
 
                       <button
                         onClick={() =>
@@ -365,6 +573,7 @@ export default function Painel() {
                       </button>
 
 
+
                       <button
                         onClick={() =>
                           mudarStatus(
@@ -377,23 +586,54 @@ export default function Painel() {
                         Cancelar
                       </button>
 
+
                     </div>
 
                   )}
 
 
 
-                  {agendamento.status === "Confirmado" && (
-
-                    <div className="mt-4 bg-blue-600 text-white p-3 rounded text-center">
-                      Corte confirmado ✅
-                    </div>
-
-                  )}
 
 
 
-                  {agendamento.status === "Cancelado" && (
+                  {true && (
+
+  <div className="grid gap-2 mt-4">
+
+    <div className="bg-blue-600 text-white p-3 rounded text-center">
+      Corte confirmado ✅
+    </div>
+
+    <button
+      onClick={() =>
+        mudarStatus(
+          agendamento.id,
+          "Finalizado"
+        )
+      }
+      className="bg-green-700 hover:bg-green-800 text-white p-3 rounded"
+    >
+      ✅ Finalizar Corte
+    </button>
+
+  </div>
+
+)}
+
+{agendamento.status?.toLowerCase() === "finalizado" && (
+
+  <div className="mt-4 bg-green-700 text-white p-3 rounded text-center">
+    Corte finalizado ✅
+  </div>
+
+)}
+
+
+
+
+
+
+                  {agendamento.status?.toLowerCase() === "cancelado" && (
 
                     <div className="mt-4 bg-red-600 text-white p-3 rounded text-center">
                       Cancelado ❌
@@ -401,20 +641,26 @@ export default function Painel() {
 
                   )}
 
+
                 </div>
+
 
               ))
 
             )}
+
 
           </section>
 
 
         </div>
 
+
       )}
 
+
     </main>
+
   );
 
 }
