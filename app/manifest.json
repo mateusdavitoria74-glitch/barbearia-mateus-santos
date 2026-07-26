@@ -1,11 +1,12 @@
 {
-  "name": "Barbearia Mateus Santos",
+  "name": "Mateus Santos Barbearia",
   "short_name": "Barbearia",
-  "description": "Agendamento online da Barbearia Mateus Santos",
+  "description": "Sistema de agendamento da Barbearia Mateus Santos",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/icon-192.png",
