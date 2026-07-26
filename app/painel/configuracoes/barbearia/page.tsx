@@ -1,61 +1,109 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function Barbearia(){
+import {
+  salvarBarbearia,
+  buscarBarbearia,
+} from "@/lib/firestore";
 
-const router = useRouter();
+export default function Barbearia() {
 
+  const router = useRouter();
 
-return (
+  const [nome, setNome] = useState("");
+  const [endereco, setEndereco] = useState("");
+  const [horario, setHorario] = useState("");
 
-<main className="min-h-screen bg-gray-100 p-8">
+  useEffect(() => {
+    carregar();
+  }, []);
 
-<div className="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
+  async function carregar() {
 
+    const dados =
+      await buscarBarbearia();
 
-<h1 className="text-3xl font-bold mb-6">
-💈 Dados da barbearia
-</h1>
+    if (dados) {
 
+      setNome(dados.nome || "");
+      setEndereco(dados.endereco || "");
+      setHorario(dados.horario || "");
 
-<input
-className="w-full border p-3 rounded mb-3"
-placeholder="Nome da barbearia"
-/>
+    }
 
+  }
 
-<input
-className="w-full border p-3 rounded mb-3"
-placeholder="Endereço"
-/>
+  async function salvar() {
 
+    await salvarBarbearia({
 
-<input
-className="w-full border p-3 rounded mb-3"
-placeholder="Horário de funcionamento"
-/>
+      nome,
+      endereco,
+      horario,
 
+    });
 
-<button
-className="w-full bg-black text-white p-3 rounded-xl font-bold"
->
-Salvar dados
-</button>
+    alert("Dados da barbearia salvos com sucesso!");
 
+  }
 
-<button
-onClick={() => router.back()}
-className="w-full bg-gray-300 p-3 rounded-xl font-bold mt-4"
->
-⬅ Voltar
-</button>
+  return (
 
+    <main className="min-h-screen bg-gray-100 p-8">
 
-</div>
+      <div className="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
 
-</main>
+        <h1 className="text-3xl font-bold mb-6">
+          💈 Dados da Barbearia
+        </h1>
 
-);
+        <input
+          className="w-full border p-3 rounded mb-3"
+          placeholder="Nome da Barbearia"
+          value={nome}
+          onChange={(e) =>
+            setNome(e.target.value)
+          }
+        />
+
+        <input
+          className="w-full border p-3 rounded mb-3"
+          placeholder="Endereço"
+          value={endereco}
+          onChange={(e) =>
+            setEndereco(e.target.value)
+          }
+        />
+
+        <input
+          className="w-full border p-3 rounded mb-3"
+          placeholder="Horário de funcionamento"
+          value={horario}
+          onChange={(e) =>
+            setHorario(e.target.value)
+          }
+        />
+
+        <button
+          onClick={salvar}
+          className="w-full bg-black text-white p-3 rounded-xl font-bold"
+        >
+          Salvar alterações
+        </button>
+
+        <button
+          onClick={() => router.back()}
+          className="w-full bg-gray-300 p-3 rounded-xl font-bold mt-4"
+        >
+          ⬅ Voltar
+        </button>
+
+      </div>
+
+    </main>
+
+  );
 
 }

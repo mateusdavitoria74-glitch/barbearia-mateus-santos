@@ -359,3 +359,91 @@ export async function buscarPerfil(){
   return null;
 
 }
+
+// ===============================
+// BARBEARIA
+// ===============================
+
+export async function salvarBarbearia(
+  dados: any
+) {
+
+  await setDoc(
+    doc(
+      db,
+      "configuracoes",
+      "barbearia"
+    ),
+    dados,
+    {
+      merge: true,
+    }
+  );
+
+}
+
+export async function buscarBarbearia() {
+
+  const resultado =
+    await getDoc(
+      doc(
+        db,
+        "configuracoes",
+        "barbearia"
+      )
+    );
+
+  if (resultado.exists()) {
+
+    return resultado.data();
+
+  }
+
+  return null;
+
+}
+
+
+
+// ===============================
+// WHATSAPP
+// ===============================
+
+export async function salvarWhatsApp(
+  dados: any
+) {
+
+  await setDoc(
+    doc(
+      db,
+      "configuracoes",
+      "whatsapp"
+    ),
+    dados,
+    {
+      merge: true,
+    }
+  );
+
+}
+
+export async function buscarWhatsApp() {
+
+  const resultado =
+    await getDoc(
+      doc(
+        db,
+        "configuracoes",
+        "whatsapp"
+      )
+    );
+
+  if (resultado.exists()) {
+
+    return resultado.data();
+
+  }
+
+  return null;
+
+}

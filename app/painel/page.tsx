@@ -1,68 +1,333 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 
 import {
-  listarAgendamentos,
+  ouvirAgendamentos,
   atualizarStatusAgendamento,
   listarClientes,
   salvarBloqueio,
+  buscarPerfil,
+  buscarBarbearia,
 } from "@/lib/firestore";
+
 
 
 export default function Painel() {
 
+
   const router = useRouter();
 
 
-  const [agendamentos, setAgendamentos] = useState<any[]>([]);
-  const [clientes, setClientes] = useState<any[]>([]);
-  const [carregando, setCarregando] = useState(true);
+
+  const [agendamentos, setAgendamentos] =
+    useState<any[]>([]);
 
 
-  const [dataBloqueio, setDataBloqueio] = useState("");
-  const [inicioBloqueio, setInicioBloqueio] = useState("");
-  const [fimBloqueio, setFimBloqueio] = useState("");
-  const [motivoBloqueio, setMotivoBloqueio] = useState("");
+  const [clientes, setClientes] =
+    useState<any[]>([]);
 
 
 
-  async function carregarDados() {
-
-    try {
-
-      const dadosAgendamentos =
-        await listarAgendamentos();
+  const [carregando, setCarregando] =
+    useState(true);
 
 
-      const dadosClientes =
-        await listarClientes();
 
 
-      setAgendamentos(dadosAgendamentos);
+  // CONTROLE DE NOVO AGENDAMENTO
 
-      setClientes(dadosClientes);
+  const primeiraCarga =
+    useRef(true);
 
 
-    } catch (erro) {
+  const quantidadeAgendamentos =
+    useRef(0);
 
-      console.log("Erro:", erro);
 
-    } finally {
 
-      setCarregando(false);
+  const audioNotificacao =
+    useRef<HTMLAudioElement | null>(null);
+
+
+
+
+
+  // DADOS DO PAINEL
+
+  const [nomeAdmin, setNomeAdmin] =
+    useState("Mateus Santos");
+
+
+
+  const [nomeBarbearia, setNomeBarbearia] =
+    useState("Barbearia Mateus Santos");
+
+
+
+
+
+
+  // BLOQUEIO DE HORÁRIO
+
+  const [dataBloqueio, setDataBloqueio] =
+    useState("");
+
+
+
+  const [inicioBloqueio, setInicioBloqueio] =
+    useState("");
+
+
+
+  const [fimBloqueio, setFimBloqueio] =
+    useState("");
+
+
+
+  const [motivoBloqueio, setMotivoBloqueio] =
+    useState("");
+
+
+
+
+
+  useEffect(()=>{
+
+
+    audioNotificacao.current =
+      new Audio("/notificacao.mp3");
+
+
+
+    if(
+      Notification.permission !== "granted"
+    ){
+
+      Notification.requestPermission();
 
     }
+
+
+  },[]);
+
+    async function carregarPerfil(){
+
+    const perfil =
+      await buscarPerfil();
+
+
+    if(perfil){
+
+      setNomeAdmin(
+        perfil.nome || "Administrador"
+      );
+
+    }
+
+
+
+    const barbearia =
+      await buscarBarbearia();
+
+
+    if(barbearia){
+
+      setNomeBarbearia(
+        barbearia.nome || "Barbearia"
+      );
+
+    }
+
 
   }
 
 
 
-  async function mudarStatus(
+
+
+
+  async function carregarClientes(){
+
+    const dados =
+      await listarClientes();
+
+
+    setClientes(
+      dados
+    );
+
+  }
+
+
+
+
+
+
+
+  useEffect(()=>{
+
+
+    const verificarUsuario =
+      onAuthStateChanged(
+
+        auth,
+
+        (usuario)=>{
+
+
+          if(!usuario){
+
+
+            router.push("/login");
+
+
+            return;
+
+
+          }
+
+
+
+          carregarPerfil();
+
+
+          carregarClientes();
+
+
+
+
+
+          // TEMPO REAL DOS AGENDAMENTOS
+
+          const cancelar =
+            ouvirAgendamentos(
+
+              (dados)=>{
+
+
+
+                if(
+                  !primeiraCarga.current &&
+                  dados.length >
+                  quantidadeAgendamentos.current
+                ){
+
+
+
+                  // TOCA SOM
+
+                  if(
+                    audioNotificacao.current
+                  ){
+
+                    audioNotificacao.current
+                    .play()
+                    .catch(
+                      (erro)=>
+                      console.log(
+                        "Som bloqueado:",
+                        erro
+                      )
+                    );
+
+                  }
+
+
+
+
+                  // NOTIFICAÇÃO DO NAVEGADOR
+
+                  if(
+                    Notification.permission === "granted"
+                  ){
+
+
+                    new Notification(
+
+                      "Novo agendamento 💈",
+
+                      {
+
+                        body:
+                        "Um cliente acabou de agendar um horário."
+
+                      }
+
+                    );
+
+
+                  }
+
+
+
+                }
+
+
+
+
+
+                primeiraCarga.current =
+                  false;
+
+
+
+                quantidadeAgendamentos.current =
+                  dados.length;
+
+
+
+                setAgendamentos(
+                  dados
+                );
+
+
+
+                setCarregando(
+                  false
+                );
+
+
+
+              }
+
+            );
+
+
+
+
+
+          return ()=>{
+
+            cancelar();
+
+          };
+
+
+        }
+
+      );
+
+
+
+
+
+    return ()=>{
+
+      verificarUsuario();
+
+    };
+
+
+
+  },[router]);
+
+    async function mudarStatus(
     id:string,
     status:string
   ){
@@ -72,10 +337,9 @@ export default function Painel() {
       status
     );
 
-
-    carregarDados();
-
   }
+
+
 
 
 
@@ -107,24 +371,21 @@ export default function Painel() {
       fim:fimBloqueio,
 
       motivo:
-        motivoBloqueio ||
-        "Bloqueio manual",
+      motivoBloqueio ||
+      "Bloqueio manual",
 
     });
 
 
 
     alert(
-      "Horário bloqueado com sucesso!"
+      "Horário bloqueado!"
     );
 
 
-    setDataBloqueio("");
-    setInicioBloqueio("");
-    setFimBloqueio("");
-    setMotivoBloqueio("");
-
   }
+
+
 
 
 
@@ -133,59 +394,34 @@ export default function Painel() {
     agendamento:any
   ){
 
+
     const numero =
       agendamento.telefone
       ?.replace(/\D/g,"");
 
 
+
     const mensagem =
-      `Olá ${agendamento.nome}! 💈\n\n`+
-      `Seu horário na Barbearia Mateus Santos está confirmado.\n\n`+
-      `📅 Data: ${agendamento.data}\n`+
-      `⏰ Horário: ${agendamento.horario}\n`+
-      `✂️ Serviço: ${agendamento.servico}\n`+
-      `💰 Valor: R$ ${agendamento.valor},00`;
+    `Olá ${agendamento.nome}! 💈\n\n`+
+    `Seu horário na ${nomeBarbearia} está confirmado.\n\n`+
+    `📅 Data: ${agendamento.data}\n`+
+    `⏰ Horário: ${agendamento.horario}\n`+
+    `✂️ Serviço: ${agendamento.servico}`;
 
 
 
     window.open(
+
       `https://wa.me/55${numero}?text=${encodeURIComponent(mensagem)}`,
+
       "_blank"
+
     );
+
 
   }
 
 
-
-  useEffect(()=>{
-
-
-    const verificarUsuario =
-      onAuthStateChanged(
-        auth,
-        (usuario)=>{
-
-
-          if(!usuario){
-
-            router.push("/login");
-
-          }else{
-
-            carregarDados();
-
-          }
-
-
-        }
-      );
-
-
-    return () =>
-      verificarUsuario();
-
-
-  },[router]);
 
 
 
@@ -194,99 +430,80 @@ export default function Painel() {
     clientes.length;
 
 
+
   const totalAgendamentos =
     agendamentos.length;
 
 
 
-  const totalConfirmados =
+  const confirmados =
     agendamentos.filter(
       (a)=>
-        a.status?.toLowerCase()==="confirmado"
-    ).length;
+      a.status?.toLowerCase()
+      === "confirmado"
+    );
 
 
 
   const faturamento =
-    agendamentos
-    .filter(
-      (a)=>
-        a.status?.toLowerCase()==="confirmado"
-    )
-    .reduce(
+    confirmados.reduce(
+
       (total,a)=>
-        total + Number(a.valor || 0),
+      total + Number(a.valor || 0),
+
       0
+
     );
 
 
 
-  const ticketMedio =
-    totalConfirmados > 0
-      ? faturamento / totalConfirmados
-      : 0;
 
 
-
-  const hoje =
-    new Date()
-    .toISOString()
-    .split("T")[0];
-
-
-
-  const agendamentosHoje =
-    agendamentos.filter(
-      (agendamento)=>
-        agendamento.data === hoje &&
-        agendamento.status?.toLowerCase() !== "finalizado"
-    );
-
-
-
-  const proximosAgendamentos =
-    agendamentos.filter(
-      (agendamento)=>
-        agendamento.data > hoje &&
-        agendamento.status?.toLowerCase() !== "finalizado"
-    );
-
-      return (
+  return (
 
     <main className="min-h-screen bg-gray-100 p-8">
 
 
-      {/* PERFIL ADMINISTRADOR */}
-
-      <div className="bg-black text-white rounded-2xl p-8 text-center mb-8 shadow-lg">
+      <div className="bg-black text-white rounded-2xl p-8 text-center mb-8">
 
 
-        <div className="text-6xl mb-3">
+        <div className="text-6xl">
           👤
         </div>
 
 
         <h1 className="text-3xl font-bold">
-          Mateus Santos
+
+          {nomeAdmin}
+
         </h1>
 
 
         <p className="text-xl">
+
           💈 Administrador
+
         </p>
 
 
-        <p className="text-gray-300 mt-2">
-          Barbearia Mateus Santos
+        <p className="text-gray-300">
+
+          {nomeBarbearia}
+
         </p>
 
 
 
         <Link
+
           href="/painel/configuracoes"
-          className="mt-5 bg-white text-black px-6 py-3 rounded-xl font-bold inline-block"
+
+          className="inline-block bg-white text-black p-3 rounded-xl mt-5 font-bold"
+
         >
+
           ⚙️ Configurações
+
         </Link>
 
 
@@ -296,94 +513,45 @@ export default function Painel() {
 
 
 
-      {/* CARDS */}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid md:grid-cols-3 gap-4 mb-8">
 
 
-        <div className="bg-white rounded-lg shadow p-4 text-center">
+        <div className="bg-white p-5 rounded shadow">
 
-          <p className="text-gray-500">
-            💰 Faturamento
-          </p>
+          💰 Faturamento
 
+          <h2 className="text-3xl font-bold">
 
-          <h2 className="text-3xl font-bold text-green-600">
             R$ {faturamento.toFixed(2)}
+
           </h2>
 
         </div>
 
 
 
+        <div className="bg-white p-5 rounded shadow">
 
-        <div className="bg-white rounded-lg shadow p-4 text-center">
-
-          <p className="text-gray-500">
-            ✂️ Cortes confirmados
-          </p>
-
+          👥 Clientes
 
           <h2 className="text-3xl font-bold">
-            {totalConfirmados}
-          </h2>
 
-        </div>
-
-
-
-
-
-        <div className="bg-white rounded-lg shadow p-4 text-center">
-
-          <p className="text-gray-500">
-            📈 Ticket médio
-          </p>
-
-
-          <h2 className="text-3xl font-bold">
-            R$ {ticketMedio.toFixed(2)}
-          </h2>
-
-        </div>
-
-
-      </div>
-
-
-
-
-
-
-      <div className="grid grid-cols-2 gap-4 mb-8">
-
-
-        <div className="bg-white rounded-lg shadow p-4 text-center">
-
-          <p className="text-gray-500">
-            👥 Clientes
-          </p>
-
-
-          <h2 className="text-3xl font-bold">
             {totalClientes}
+
           </h2>
 
         </div>
 
 
 
+        <div className="bg-white p-5 rounded shadow">
 
-
-        <div className="bg-white rounded-lg shadow p-4 text-center">
-
-          <p className="text-gray-500">
-            📅 Agendamentos
-          </p>
-
+          📅 Agendamentos
 
           <h2 className="text-3xl font-bold">
+
             {totalAgendamentos}
+
           </h2>
 
         </div>
@@ -395,376 +563,118 @@ export default function Painel() {
 
 
 
-
-      {/* BLOQUEIO */}
-
-      <section className="bg-white p-6 rounded-lg shadow mb-8">
+      <section className="bg-white p-6 rounded shadow mb-8">
 
 
         <h2 className="text-2xl font-bold mb-4">
-          🔒 Bloquear horário
+
+          📅 Agendamentos
+
         </h2>
 
 
 
-        <input
-          type="date"
-          className="w-full border p-3 rounded mb-3"
-          value={dataBloqueio}
-          onChange={(e)=>
-            setDataBloqueio(e.target.value)
-          }
-        />
+        {carregando ? (
+
+          <p>
+            Carregando...
+          </p>
+
+
+        ) : (
+
+
+          agendamentos.map((agendamento)=>(
+
+
+            <div
+
+              key={agendamento.id}
+
+              className="border p-5 rounded mb-4"
+
+            >
+
+
+              <h3 className="font-bold text-xl">
+
+                👤 {agendamento.nome}
+
+              </h3>
+
+
+              <p>
+                📱 {agendamento.telefone}
+              </p>
+
+
+              <p>
+                ✂️ {agendamento.servico}
+              </p>
+
+
+              <p>
+                📅 {agendamento.data}
+              </p>
+
+
+              <p>
+                ⏰ {agendamento.horario}
+              </p>
+
+
+              <p>
+                Status: {agendamento.status}
+              </p>
 
 
 
-        <input
-          type="time"
-          className="w-full border p-3 rounded mb-3"
-          value={inicioBloqueio}
-          onChange={(e)=>
-            setInicioBloqueio(e.target.value)
-          }
-        />
+              <button
+
+                onClick={()=>abrirWhatsApp(agendamento)}
+
+                className="bg-green-600 text-white p-3 rounded w-full mt-3"
+
+              >
+
+                📲 WhatsApp
+
+              </button>
 
 
 
-        <input
-          type="time"
-          className="w-full border p-3 rounded mb-3"
-          value={fimBloqueio}
-          onChange={(e)=>
-            setFimBloqueio(e.target.value)
-          }
-        />
+              {agendamento.status === "agendado" && (
 
+                <button
 
+                  onClick={()=>
+                    mudarStatus(
+                      agendamento.id,
+                      "Confirmado"
+                    )
+                  }
 
-        <input
-          className="w-full border p-3 rounded mb-3"
-          placeholder="Motivo"
-          value={motivoBloqueio}
-          onChange={(e)=>
-            setMotivoBloqueio(e.target.value)
-          }
-        />
+                  className="bg-blue-600 text-white p-3 rounded w-full mt-3"
 
+                >
 
+                  Confirmar corte
 
-        <button
-          onClick={bloquearHorario}
-          className="w-full bg-black text-white p-3 rounded"
-        >
-          Bloquear horário
-        </button>
-
-
-      </section>
-
-            {carregando ? (
-
-        <div className="text-center mt-8">
-          Carregando...
-        </div>
-
-
-      ) : (
-
-
-        <div className="max-w-4xl mx-auto mt-8 grid gap-8">
-
-
-
-          {/* CLIENTES */}
-
-          <section>
-
-
-            <h2 className="text-2xl font-bold mb-4">
-              👥 Clientes cadastrados
-            </h2>
-
-
-
-            <div className="grid gap-3">
-
-
-              {clientes.length === 0 ? (
-
-                <div className="bg-white p-4 rounded shadow">
-                  Nenhum cliente cadastrado.
-                </div>
-
-
-              ) : (
-
-
-                clientes.map((cliente)=>(
-
-                  <div
-                    key={cliente.id}
-                    className="bg-white p-4 rounded shadow"
-                  >
-
-                    <p className="font-bold">
-                      👤 {cliente.nome}
-                    </p>
-
-
-                    <p>
-                      📱 {cliente.telefone}
-                    </p>
-
-
-                  </div>
-
-                ))
+                </button>
 
               )}
+
 
 
             </div>
 
 
-          </section>
+          ))
 
+        )}
 
 
-
-
-          {/* AGENDAMENTOS */}
-
-          <section>
-
-
-            <h2 className="text-2xl font-bold mb-4">
-              📅 Agendamentos
-            </h2>
-
-
-
-
-            <h3 className="font-bold mb-3">
-              📍 Hoje
-            </h3>
-
-
-
-            {agendamentosHoje.length === 0 && (
-
-              <div className="bg-white p-4 rounded shadow mb-5">
-                Nenhum agendamento hoje.
-              </div>
-
-            )}
-
-
-
-
-
-
-            {[...agendamentosHoje, ...proximosAgendamentos]
-            .map((agendamento)=>(
-
-
-              <div
-                key={agendamento.id}
-                className="bg-white p-6 rounded-lg shadow mb-4"
-              >
-
-
-                <h3 className="text-xl font-bold">
-                  👤 {agendamento.nome}
-                </h3>
-
-
-
-                <p>
-                  📱 {agendamento.telefone}
-                </p>
-
-
-
-                <p>
-                  ✂️ {agendamento.servico}
-                </p>
-
-
-
-                <p>
-                  💰 Valor: R$ {agendamento.valor}
-                </p>
-
-
-
-                <p>
-                  📅 {agendamento.data}
-                </p>
-
-
-
-                <p>
-                  ⏰ {agendamento.horario}
-                </p>
-
-
-
-                <p>
-                  Status: {agendamento.status}
-                </p>
-
-
-
-
-
-                <button
-                  onClick={() =>
-                    abrirWhatsApp(agendamento)
-                  }
-                  className="bg-green-500 text-white p-3 rounded mt-3 w-full"
-                >
-                  📲 Confirmar no WhatsApp
-                </button>
-
-
-
-
-
-
-                {agendamento.status?.toLowerCase() === "agendado" && (
-
-                  <div className="grid gap-2 mt-4">
-
-
-                    <button
-                      onClick={() =>
-                        mudarStatus(
-                          agendamento.id,
-                          "Confirmado"
-                        )
-                      }
-                      className="bg-green-600 text-white p-3 rounded"
-                    >
-                      Confirmar corte
-                    </button>
-
-
-
-
-                    <button
-                      onClick={() =>
-                        mudarStatus(
-                          agendamento.id,
-                          "Cancelado"
-                        )
-                      }
-                      className="bg-red-600 text-white p-3 rounded"
-                    >
-                      Cancelar
-                    </button>
-
-
-                  </div>
-
-                )}
-
-
-
-
-
-
-
-                {agendamento.status?.toLowerCase() === "confirmado" && (
-
-                  <div className="grid gap-2 mt-4">
-
-
-                    <div className="bg-blue-600 text-white p-3 rounded text-center">
-                      Corte confirmado ✅
-                    </div>
-
-
-
-
-                    <button
-                      onClick={() =>
-                        mudarStatus(
-                          agendamento.id,
-                          "Finalizado"
-                        )
-                      }
-                      className="bg-green-700 hover:bg-green-800 text-white p-3 rounded"
-                    >
-                      ✅ Finalizar Corte
-                    </button>
-
-
-                  </div>
-
-                )}
-
-
-
-
-
-
-
-                {agendamento.status?.toLowerCase() === "finalizado" && (
-
-                  <div className="mt-4 bg-green-700 text-white p-3 rounded text-center">
-                    Corte finalizado ✅
-                  </div>
-
-                )}
-
-
-
-
-
-
-                {agendamento.status?.toLowerCase() === "cancelado" && (
-
-                  <div className="mt-4 bg-red-600 text-white p-3 rounded text-center">
-                    Cancelado ❌
-                  </div>
-
-                )}
-
-
-
-              </div>
-
-
-            ))}
-
-
-
-
-
-            <h3 className="font-bold mt-8 mb-3">
-              📅 Próximos agendamentos
-            </h3>
-
-
-
-            {proximosAgendamentos.length === 0 && (
-
-              <div className="bg-white p-4 rounded shadow">
-                Nenhum próximo agendamento.
-              </div>
-
-            )}
-
-
-
-          </section>
-
-
-
-        </div>
-
-
-      )}
+      </section>
 
 
     </main>
