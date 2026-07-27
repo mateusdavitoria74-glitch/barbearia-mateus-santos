@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import Navbar from "@/components/Navbar";
-import BottomMenu from "@/components/BottomMenu";
-import InstallButton from "@/components/InstallButton";
+import ClientLayout from "@/components/ClientLayout";
 
 
 export const metadata: Metadata = {
@@ -13,9 +11,9 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 
   icons: {
-  icon: "/logo.png",
-  apple: "/logo.png",
-},
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 
   appleWebApp: {
     capable: true,
@@ -36,17 +34,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
 
+
   return (
 
     <html lang="pt-BR">
 
       <body>
 
-        <Navbar />
+        <ClientLayout>
 
-        {children}
+          {children}
 
-        <BottomMenu />
+        </ClientLayout>
+
 
       </body>
 
