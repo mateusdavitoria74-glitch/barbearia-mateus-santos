@@ -1,79 +1,133 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import {
+  listarServicos,
+  buscarBarbearia,
+} from "@/lib/firestore";
 import { useRouter } from "next/navigation";
 
-const servicos = [
-  { nome: "Barba", valor: "R$ 25,00" },
-  { nome: "Barba + Pezinho", valor: "R$ 30,00" },
-  { nome: "Corte + Alisamento", valor: "R$ 70,00" },
-  { nome: "Corte + Barba", valor: "R$ 50,00" },
-  { nome: "Corte + Pigmentação", valor: "R$ 60,00" },
-  { nome: "Navalhado", valor: "R$ 35,00" },
-  { nome: "Corte Social", valor: "R$ 25,00" },
-];
+type Servico = {
+  id: string;
+  nome: string;
+  valor: number;
+  duracao: number;
+  status: string;
+};
+
+type Barbearia = {
+  nome?: string;
+  slogan?: string;
+  endereco?: string;
+  maps?: string;
+  telefone?: string;
+  instagram?: string;
+  logo?: string;
+};
 
 export default function Home() {
 
   const router = useRouter();
 
+  const [servicos, setServicos] = useState<Servico[]>([]);
 
-useEffect(() => {
+  const [barbearia, setBarbearia] = useState<Barbearia>({
+    nome: "Mateus Santos",
+    slogan: "Seu estilo, nosso cuidado.",
+    endereco: "Rua Vinte e Cinco de Dezembro, Nº 8",
+    maps: "",
+    telefone: "",
+    instagram: "",
+    logo: "/logo.png",
+  });
 
-  const verificarUsuario = onAuthStateChanged(
-    auth,
-    (usuario) => {
+  useEffect(() => {
 
-      if (
-        usuario &&
-        usuario.email === "mateusdavitoria74@gmail.com"
-      ) {
+    const verificarUsuario = onAuthStateChanged(
+      auth,
+      (usuario) => {
 
-        router.push("/painel");
+        if (
+          usuario &&
+          usuario.email === "mateusdavitoria74@gmail.com"
+        ) {
+
+          router.push("/painel");
+
+        }
+
+      }
+    );
+
+    carregarServicos();
+    carregarBarbearia();
+
+    return () => verificarUsuario();
+
+  }, [router]);
+
+  async function carregarServicos() {
+
+    try {
+
+      const lista = await listarServicos();
+
+      setServicos(lista as Servico[]);
+
+    } catch (erro) {
+
+      console.log(erro);
+
+    }
+
+  }
+
+  async function carregarBarbearia() {
+
+    try {
+
+      const dados = await buscarBarbearia();
+
+      if (dados) {
+
+        setBarbearia(dados);
 
       }
 
+    } catch (erro) {
+
+      console.log(erro);
+
     }
-  );
 
-
-  return () => verificarUsuario();
-
-}, [router]);
+  }
 
   return (
 
     <main className="min-h-screen bg-gray-100 pb-20">
 
-
-      {/* Tela inicial estilo aplicativo */}
-
       <section className="bg-black text-white p-10 text-center rounded-b-3xl">
 
+        <img
+          src={barbearia.logo || "/logo.png"}
+          className="w-28 h-28 rounded-full object-cover mx-auto shadow"
+          alt="Logo"
+        />
 
-        <div className="text-6xl mb-4">
-          💈
-        </div>
+        <h1 className="text-3xl font-bold mt-4">
 
+          {barbearia.nome}
 
-        <h1 className="text-3xl font-bold">
-          Mateus Santos
         </h1>
 
-
-        <h2 className="text-xl">
-          Barbershop
-        </h2>
-
-
         <p className="mt-4 text-gray-300">
-          Seu estilo, nosso cuidado.
+
+          {barbearia.slogan}
+
         </p>
-
-
 
         <Link
           href="/agendar"
@@ -82,142 +136,144 @@ useEffect(() => {
           ✂️ Agendar horário
         </Link>
 
-
       </section>
 
-
-
-      {/* Atalhos do app */}
-
-      <section className="p-5 grid grid-cols-2 gap-4">
-
+      <section className="p-5">
 
         <Link
           href="/meus-agendamentos"
-          className="bg-white shadow rounded-xl p-5 text-center font-bold"
+          className="bg-white shadow rounded-xl p-5 text-center font-bold block"
         >
           📅
           <br />
           Meus horários
         </Link>
 
-
-
-        <Link
-          href="/servicos"
-          className="bg-white shadow rounded-xl p-5 text-center font-bold"
-        >
-          ✂️
-          <br />
-          Serviços
-        </Link>
-
-
       </section>
 
-
-
+            {/* Serviços */}
 
       <section className="p-5">
 
-
         <h2 className="text-2xl font-bold mb-5 text-center">
-          Nossos serviços
-        </h2>
 
+          Nossos serviços
+
+        </h2>
 
         <div className="grid gap-4">
 
+          {servicos.length === 0 ? (
 
-          {servicos.map((servico)=>(
+            <div className="bg-white rounded-xl shadow p-5 text-center text-gray-500">
 
-            <div
-              key={servico.nome}
-              className="bg-white rounded-xl shadow p-5 flex justify-between"
-            >
-
-              <span className="font-bold">
-                {servico.nome}
-              </span>
-
-
-              <span className="text-green-600 font-bold">
-                {servico.valor}
-              </span>
-
+              Nenhum serviço cadastrado.
 
             </div>
 
-          ))}
+          ) : (
 
+            servicos
+              .filter((servico) => servico.status === "Ativo")
+              .map((servico) => (
+
+                <div
+                  key={servico.id}
+                  className="bg-white rounded-xl shadow p-5 flex justify-between items-center"
+                >
+
+                  <div>
+
+                    <p className="font-bold">
+
+                      {servico.nome}
+
+                    </p>
+
+                    <p className="text-sm text-gray-500">
+
+                      {servico.duracao} min
+
+                    </p>
+
+                  </div>
+
+                  <span className="text-green-600 font-bold">
+
+                    R$ {servico.valor.toFixed(2).replace(".", ",")}
+
+                  </span>
+
+                </div>
+
+              ))
+
+          )}
 
         </div>
 
-
       </section>
 
-
-
+      {/* Localização */}
 
       <section className="bg-gray-200 p-6 text-center">
 
-
         <h2 className="text-xl font-bold">
+
           📍 Localização
+
         </h2>
 
-
         <p className="mt-3">
-          Rua Vinte e Cinco de Dezembro, N° 8
-          <br/>
-          Retiro Saudoso
-          <br/>
-          Cariacica - ES
+
+          {barbearia.endereco}
+
         </p>
 
-
         <a
-          href="https://www.google.com/maps/search/?api=1&query=Rua+Vinte+e+Cinco+de+Dezembro+n8+Retiro+Saudoso+Cariacica+ES"
+          href={barbearia.maps || "#"}
           target="_blank"
+          rel="noopener noreferrer"
           className="inline-block mt-5 bg-blue-600 text-white p-3 rounded-xl font-bold"
         >
-          Abrir localização
-        </a>
 
+          Abrir localização
+
+        </a>
 
       </section>
 
-
-
+      {/* WhatsApp */}
 
       <section className="p-6 text-center">
 
-
         <h2 className="font-bold text-xl">
+
           📲 WhatsApp
+
         </h2>
 
-
         <a
-          href="https://wa.me/SEUNUMERO"
+          href={`https://wa.me/${barbearia.telefone}`}
           target="_blank"
+          rel="noopener noreferrer"
           className="inline-block mt-4 bg-green-600 text-white px-8 py-3 rounded-xl font-bold"
         >
-          Falar agora
-        </a>
 
+          Falar agora
+
+        </a>
 
       </section>
 
+            <footer className="bg-black text-white text-center p-5">
 
+        © {barbearia.nome} 💈
 
-      <footer className="bg-black text-white text-center p-5">
-        © Mateus Santos Barbershop 💈
       </footer>
-
-
 
     </main>
 
   );
+
 }

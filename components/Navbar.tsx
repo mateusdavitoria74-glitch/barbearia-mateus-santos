@@ -9,9 +9,6 @@ export default function Navbar() {
           🏠 Início
         </Link>
 
-        <Link href="/servicos">
-          ✂️ Serviços
-        </Link>
 
         <Link href="/agendamento">
           📅 Agendar
