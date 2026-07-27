@@ -3,6 +3,7 @@ import "./globals.css";
 
 import Navbar from "@/components/Navbar";
 import BottomMenu from "@/components/BottomMenu";
+import InstallButton from "@/components/InstallButton";
 
 
 export const metadata: Metadata = {
@@ -12,9 +13,9 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 
   icons: {
-    icon: "/icon-192.png",
-    apple: "/icon-192.png",
-  },
+  icon: "/logo.png",
+  apple: "/logo.png",
+},
 
   appleWebApp: {
     capable: true,
