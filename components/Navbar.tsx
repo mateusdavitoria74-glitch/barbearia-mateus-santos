@@ -1,24 +1,11 @@
-import Link from "next/link";
-
 export default function Navbar() {
   return (
-    <nav className="bg-black text-white p-4">
-      <div className="flex justify-center gap-4 flex-wrap">
+    <nav className="bg-black text-white p-4 shadow">
 
-        <Link href="/">
-          🏠 Início
-        </Link>
+      <h1 className="text-center text-xl font-bold">
+        ✂️ Barbearia Mateus Santos
+      </h1>
 
-
-        <Link href="/agendamento">
-          📅 Agendar
-        </Link>
-
-        <Link href="/meus-agendamentos">
-          📋 Meus Agendamentos
-        </Link>
-
-      </div>
     </nav>
   );
 }

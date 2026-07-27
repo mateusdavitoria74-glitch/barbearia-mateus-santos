@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+
 import {
   salvarAgendamento,
   listarAgendamentos,
@@ -36,16 +37,36 @@ export default function AgendamentoForm() {
   ];
 
 
+  function verificarDiaFechado(valorData: string) {
+
+    const dataSelecionada = new Date(
+      valorData + "T00:00:00"
+    );
+
+    const dia = dataSelecionada.getDay();
+
+    // 0 = Domingo
+    // 1 = Segunda
+
+    return dia === 0 || dia === 1;
+
+  }
+
+
+
   async function buscarHorarios() {
 
     const agendamentos = await listarAgendamentos();
 
+
     const ocupados = agendamentos
+
       .filter(
         (item: any) =>
           item.data === data &&
           item.status !== "Cancelado"
       )
+
       .map(
         (item: any) =>
           item.horario
@@ -57,6 +78,7 @@ export default function AgendamentoForm() {
   }
 
 
+
   useEffect(() => {
 
     if (data) {
@@ -64,6 +86,9 @@ export default function AgendamentoForm() {
     }
 
   }, [data]);
+
+
+
 
 
   async function confirmarAgendamento() {
@@ -80,6 +105,19 @@ export default function AgendamentoForm() {
     }
 
 
+
+    if (verificarDiaFechado(data)) {
+
+      setMensagem(
+        "Não atendemos aos domingos e segundas-feiras."
+      );
+
+      return;
+
+    }
+
+
+
     if (horariosOcupados.includes(horario)) {
 
       setMensagem(
@@ -89,6 +127,7 @@ export default function AgendamentoForm() {
       return;
 
     }
+
 
 
     const novoAgendamento = {
@@ -103,11 +142,14 @@ export default function AgendamentoForm() {
     };
 
 
+
     try {
+
 
       await salvarAgendamento(
         novoAgendamento
       );
+
 
 
       setMensagem(
@@ -115,22 +157,31 @@ export default function AgendamentoForm() {
       );
 
 
+
       setNome("");
       setData("");
       setHorario("");
 
 
+
     } catch (erro) {
 
+
       console.log(erro);
+
 
       setMensagem(
         "Erro ao salvar agendamento."
       );
 
+
     }
 
+
   }
+
+
+
 
 
   return (
@@ -147,9 +198,11 @@ export default function AgendamentoForm() {
       <div className="max-w-md mx-auto mt-8 bg-white p-6 rounded-lg shadow">
 
 
+
         <label className="block mb-2">
           Nome do cliente
         </label>
+
 
 
         <input
@@ -168,9 +221,12 @@ export default function AgendamentoForm() {
 
 
 
+
+
         <label className="block mb-2">
           Serviço escolhido
         </label>
+
 
 
 
@@ -199,9 +255,13 @@ export default function AgendamentoForm() {
 
 
 
+
+
         <label className="block mb-2">
           Data
         </label>
+
+
 
 
         <input
@@ -212,17 +272,49 @@ export default function AgendamentoForm() {
 
           value={data}
 
-          onChange={(e) =>
-            setData(e.target.value)
-          }
+          onChange={(e) => {
+
+
+            const novaData = e.target.value;
+
+
+
+            if (verificarDiaFechado(novaData)) {
+
+
+              setMensagem(
+                "Não atendemos aos domingos e segundas-feiras."
+              );
+
+
+              setData("");
+              setHorario("");
+
+
+              return;
+
+
+            }
+
+
+
+            setMensagem("");
+
+            setData(novaData);
+
+
+          }}
 
         />
+
+
 
 
 
         <label className="block mb-2">
           Horário
         </label>
+
 
 
 
@@ -239,13 +331,17 @@ export default function AgendamentoForm() {
         >
 
 
+
           <option value="">
             Escolha um horário
           </option>
 
 
 
+
+
           {horarios.map((hora) => (
+
 
             <option
 
@@ -257,18 +353,25 @@ export default function AgendamentoForm() {
 
             >
 
+
               {hora}
+
 
               {horariosOcupados.includes(hora)
                 ? " - Ocupado"
                 : ""}
 
+
             </option>
+
 
           ))}
 
 
+
         </select>
+
+
 
 
 
@@ -286,6 +389,8 @@ export default function AgendamentoForm() {
 
 
 
+
+
         {mensagem && (
 
           <p className="mt-4 text-center font-bold">
@@ -297,7 +402,11 @@ export default function AgendamentoForm() {
         )}
 
 
+
+
+
       </div>
+
 
 
     </main>
