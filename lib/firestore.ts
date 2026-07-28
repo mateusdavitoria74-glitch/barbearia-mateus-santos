@@ -447,3 +447,46 @@ export async function buscarWhatsApp() {
   return null;
 
 }
+
+// ===============================
+// HORÁRIOS
+// ===============================
+
+export async function salvarHorarios(
+  dados: any
+) {
+
+  await setDoc(
+    doc(
+      db,
+      "configuracoes",
+      "horarios"
+    ),
+    dados,
+    {
+      merge: true,
+    }
+  );
+
+}
+
+export async function buscarHorarios() {
+
+  const resultado =
+    await getDoc(
+      doc(
+        db,
+        "configuracoes",
+        "horarios"
+      )
+    );
+
+  if (resultado.exists()) {
+
+    return resultado.data();
+
+  }
+
+  return null;
+
+}
