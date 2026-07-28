@@ -45,10 +45,7 @@ export default function Agendamentos() {
 
       setAgendamentos(lista);
     } catch (erro) {
-      console.log(
-        "Erro ao carregar agendamentos:",
-        erro
-      );
+      console.log("Erro ao carregar agendamentos:", erro);
     } finally {
       setCarregando(false);
     }
@@ -59,10 +56,7 @@ export default function Agendamentos() {
     status: string
   ) {
     try {
-      await atualizarStatusAgendamento(
-        id,
-        status
-      );
+      await atualizarStatusAgendamento(id, status);
 
       setAgendamentos((lista) =>
         lista.map((item) =>
@@ -84,10 +78,7 @@ export default function Agendamentos() {
           : item
       );
     } catch (erro) {
-      console.log(
-        "Erro ao atualizar status:",
-        erro
-      );
+      console.log("Erro ao atualizar status:", erro);
     }
   }
 
@@ -101,6 +92,45 @@ export default function Agendamentos() {
     }
 
     return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  }
+
+  // ===============================
+  // WHATSAPP
+  // ===============================
+
+  function enviarWhatsApp(agendamento: Agendamento) {
+    if (!agendamento.telefone) {
+      alert("Esse cliente não possui WhatsApp cadastrado.");
+      return;
+    }
+
+    // Remove espaços, parênteses, hífens etc.
+    let telefone = agendamento.telefone.replace(/\D/g, "");
+
+    // Se o número tiver somente DDD + telefone,
+    // adiciona o código do Brasil.
+    if (telefone.length === 10 || telefone.length === 11) {
+      telefone = "55" + telefone;
+    }
+
+    const mensagem = `
+Olá, ${agendamento.nome || "cliente"}! 💈
+
+Seu horário na Barbearia Mateus Santos está confirmado! ✂️
+
+📅 Data: ${formatarData(agendamento.data)}
+🕒 Horário: ${agendamento.horario || "Não informado"}
+✂️ Serviço: ${agendamento.servico || "Não informado"}
+
+Aguardamos você! 😊
+
+Barbearia Mateus Santos 💈
+`.trim();
+
+    const linkWhatsApp =
+      `https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`;
+
+    window.open(linkWhatsApp, "_blank");
   }
 
   return (
@@ -124,7 +154,6 @@ export default function Agendamentos() {
 
         </div>
 
-
         {/* CARREGANDO */}
 
         {carregando && (
@@ -132,7 +161,6 @@ export default function Agendamentos() {
             Carregando agendamentos...
           </div>
         )}
-
 
         {/* NENHUM AGENDAMENTO */}
 
@@ -154,7 +182,6 @@ export default function Agendamentos() {
 
           )}
 
-
         {/* LISTA */}
 
         {!carregando &&
@@ -169,9 +196,7 @@ export default function Agendamentos() {
                     key={agendamento.id}
                     type="button"
                     onClick={() =>
-                      setSelecionado(
-                        agendamento
-                      )
+                      setSelecionado(agendamento)
                     }
                     className="w-full text-left bg-white rounded-2xl shadow p-5 hover:shadow-lg hover:scale-[1.01] transition cursor-pointer"
                   >
@@ -201,13 +226,11 @@ export default function Agendamentos() {
 
                       </div>
 
-
                       <span className="text-blue-600 font-bold text-sm">
                         Ver detalhes →
                       </span>
 
                     </div>
-
 
                     <div className="mt-4 border-t pt-3">
 
@@ -228,7 +251,6 @@ export default function Agendamentos() {
 
           )}
 
-
         {/* VOLTAR */}
 
         <Link
@@ -239,7 +261,6 @@ export default function Agendamentos() {
         </Link>
 
       </div>
-
 
       {/* DETALHES */}
 
@@ -253,7 +274,7 @@ export default function Agendamentos() {
         >
 
           <div
-            className="bg-white w-full max-w-md rounded-3xl shadow-xl p-6"
+            className="bg-white w-full max-w-md rounded-3xl shadow-xl p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) =>
               e.stopPropagation()
             }
@@ -277,8 +298,9 @@ export default function Agendamentos() {
 
             </div>
 
-
             <div className="mt-6 space-y-4">
+
+              {/* CLIENTE */}
 
               <div>
                 <p className="text-gray-500 text-sm">
@@ -292,6 +314,7 @@ export default function Agendamentos() {
                 </p>
               </div>
 
+              {/* WHATSAPP */}
 
               <div>
                 <p className="text-gray-500 text-sm">
@@ -305,6 +328,7 @@ export default function Agendamentos() {
                 </p>
               </div>
 
+              {/* SERVIÇO */}
 
               <div>
                 <p className="text-gray-500 text-sm">
@@ -318,6 +342,7 @@ export default function Agendamentos() {
                 </p>
               </div>
 
+              {/* DATA */}
 
               <div>
                 <p className="text-gray-500 text-sm">
@@ -332,6 +357,7 @@ export default function Agendamentos() {
                 </p>
               </div>
 
+              {/* HORÁRIO */}
 
               <div>
                 <p className="text-gray-500 text-sm">
@@ -345,6 +371,7 @@ export default function Agendamentos() {
                 </p>
               </div>
 
+              {/* STATUS */}
 
               <div>
                 <p className="text-gray-500 text-sm">
@@ -359,10 +386,23 @@ export default function Agendamentos() {
 
             </div>
 
-
             {/* BOTÕES */}
 
             <div className="grid gap-3 mt-6">
+
+              {/* WHATSAPP */}
+
+              <button
+                type="button"
+                onClick={() =>
+                  enviarWhatsApp(selecionado)
+                }
+                className="bg-green-600 text-white p-4 rounded-xl font-bold hover:bg-green-700"
+              >
+                📲 Enviar confirmação pelo WhatsApp
+              </button>
+
+              {/* CONFIRMAR */}
 
               <button
                 type="button"
@@ -372,11 +412,12 @@ export default function Agendamentos() {
                     "Confirmado"
                   )
                 }
-                className="bg-green-600 text-white p-3 rounded-xl font-bold"
+                className="bg-green-800 text-white p-3 rounded-xl font-bold"
               >
                 ✅ Confirmar
               </button>
 
+              {/* FINALIZAR */}
 
               <button
                 type="button"
@@ -391,6 +432,7 @@ export default function Agendamentos() {
                 ✂️ Finalizar corte
               </button>
 
+              {/* CANCELAR */}
 
               <button
                 type="button"
