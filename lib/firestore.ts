@@ -22,24 +22,75 @@ const agendamentosRef = collection(
 );
 
 
+// ===============================
+// SALVAR AGENDAMENTO + CLIENTE
+// ===============================
+
 export async function salvarAgendamento(
   dados: any
 ) {
 
+  // Salva o agendamento
   await addDoc(
     agendamentosRef,
     dados
   );
 
+
+  // Se tiver WhatsApp, salva o cliente
+  if (dados.telefone) {
+
+    const clientesSnapshot =
+      await getDocs(
+        clientesRef
+      );
+
+
+    const clienteExistente =
+      clientesSnapshot.docs.find(
+        (documento) => {
+
+          const cliente =
+            documento.data();
+
+          return (
+            cliente.telefone ===
+            dados.telefone
+          );
+
+        }
+      );
+
+
+    // Se o cliente ainda não existe
+    if (!clienteExistente) {
+
+      await addDoc(
+        clientesRef,
+        {
+          nome: dados.nome,
+          telefone: dados.telefone,
+          criadoEm: new Date(),
+        }
+      );
+
+    }
+
+  }
+
 }
 
 
+// ===============================
+// LISTAR AGENDAMENTOS
+// ===============================
 
 export async function listarAgendamentos() {
 
-  const snapshot = await getDocs(
-    agendamentosRef
-  );
+  const snapshot =
+    await getDocs(
+      agendamentosRef
+    );
 
 
   return snapshot.docs.map(
@@ -55,17 +106,21 @@ export async function listarAgendamentos() {
 }
 
 
+// ===============================
+// ATUALIZAR STATUS
+// ===============================
 
 export async function atualizarStatusAgendamento(
   id: string,
   status: string
 ) {
 
-  const agendamentoRef = doc(
-    db,
-    "agendamentos",
-    id
-  );
+  const agendamentoRef =
+    doc(
+      db,
+      "agendamentos",
+      id
+    );
 
 
   await updateDoc(
@@ -78,8 +133,9 @@ export async function atualizarStatusAgendamento(
 }
 
 
-
-// TEMPO REAL
+// ===============================
+// AGENDAMENTOS EM TEMPO REAL
+// ===============================
 
 export function ouvirAgendamentos(
   callback: (dados: any[]) => void
@@ -109,7 +165,6 @@ export function ouvirAgendamentos(
 }
 
 
-
 // ===============================
 // CLIENTES
 // ===============================
@@ -120,6 +175,9 @@ const clientesRef = collection(
 );
 
 
+// ===============================
+// SALVAR CLIENTE
+// ===============================
 
 export async function salvarCliente(
   dados: any
@@ -133,12 +191,16 @@ export async function salvarCliente(
 }
 
 
+// ===============================
+// LISTAR CLIENTES
+// ===============================
 
 export async function listarClientes() {
 
-  const snapshot = await getDocs(
-    clientesRef
-  );
+  const snapshot =
+    await getDocs(
+      clientesRef
+    );
 
 
   return snapshot.docs.map(
@@ -154,8 +216,9 @@ export async function listarClientes() {
 }
 
 
-
-// TEMPO REAL
+// ===============================
+// CLIENTES EM TEMPO REAL
+// ===============================
 
 export function ouvirClientes(
   callback: (dados: any[]) => void
@@ -184,8 +247,6 @@ export function ouvirClientes(
 
 }
 
-
-
 // ===============================
 // BLOQUEIOS DE HORÁRIOS
 // ===============================
@@ -196,6 +257,9 @@ const bloqueiosRef = collection(
 );
 
 
+// ===============================
+// SALVAR BLOQUEIO
+// ===============================
 
 export async function salvarBloqueio(
   dados: any
@@ -209,12 +273,16 @@ export async function salvarBloqueio(
 }
 
 
+// ===============================
+// LISTAR BLOQUEIOS
+// ===============================
 
 export async function listarBloqueios() {
 
-  const snapshot = await getDocs(
-    bloqueiosRef
-  );
+  const snapshot =
+    await getDocs(
+      bloqueiosRef
+    );
 
 
   return snapshot.docs.map(
@@ -230,7 +298,6 @@ export async function listarBloqueios() {
 }
 
 
-
 // ===============================
 // SERVIÇOS
 // ===============================
@@ -241,6 +308,9 @@ const servicosRef = collection(
 );
 
 
+// ===============================
+// SALVAR SERVIÇO
+// ===============================
 
 export async function salvarServico(
   dados: any
@@ -254,35 +324,44 @@ export async function salvarServico(
 }
 
 
+// ===============================
+// LISTAR SERVIÇOS
+// ===============================
 
 export async function listarServicos() {
 
-  const snapshot = await getDocs(
-    servicosRef
-  );
+  const snapshot =
+    await getDocs(
+      servicosRef
+    );
 
 
   return snapshot.docs.map(
     (documento) => {
 
-      const dados = documento.data();
+      const dados =
+        documento.data();
 
 
       return {
 
         id: documento.id,
 
-        nome: dados.nome || "",
+        nome:
+          dados.nome || "",
 
-        valor: Number(
-          dados.valor || 0
-        ),
+        valor:
+          Number(
+            dados.valor || 0
+          ),
 
-        duracao: Number(
-          dados.duracao || 0
-        ),
+        duracao:
+          Number(
+            dados.duracao || 0
+          ),
 
-        status: dados.status || "Ativo",
+        status:
+          dados.status || "Ativo",
 
       };
 
@@ -292,17 +371,21 @@ export async function listarServicos() {
 }
 
 
+// ===============================
+// ATUALIZAR SERVIÇO
+// ===============================
 
 export async function atualizarServico(
   id: string,
   dados: any
 ) {
 
-  const servicoRef = doc(
-    db,
-    "servicos",
-    id
-  );
+  const servicoRef =
+    doc(
+      db,
+      "servicos",
+      id
+    );
 
 
   await updateDoc(
@@ -312,14 +395,14 @@ export async function atualizarServico(
 
 }
 
+
 // ===============================
 // PERFIL ADMINISTRADOR
 // ===============================
 
-
 export async function salvarPerfil(
-  dados:any
-){
+  dados: any
+) {
 
   await setDoc(
     doc(
@@ -329,15 +412,14 @@ export async function salvarPerfil(
     ),
     dados,
     {
-      merge:true
+      merge: true,
     }
   );
 
 }
 
 
-
-export async function buscarPerfil(){
+export async function buscarPerfil() {
 
   const resultado =
     await getDoc(
@@ -349,7 +431,9 @@ export async function buscarPerfil(){
     );
 
 
-  if(resultado.exists()){
+  if (
+    resultado.exists()
+  ) {
 
     return resultado.data();
 
@@ -359,6 +443,7 @@ export async function buscarPerfil(){
   return null;
 
 }
+
 
 // ===============================
 // BARBEARIA
@@ -382,6 +467,7 @@ export async function salvarBarbearia(
 
 }
 
+
 export async function buscarBarbearia() {
 
   const resultado =
@@ -393,17 +479,19 @@ export async function buscarBarbearia() {
       )
     );
 
-  if (resultado.exists()) {
+
+  if (
+    resultado.exists()
+  ) {
 
     return resultado.data();
 
   }
 
+
   return null;
 
 }
-
-
 
 // ===============================
 // WHATSAPP
@@ -427,6 +515,7 @@ export async function salvarWhatsApp(
 
 }
 
+
 export async function buscarWhatsApp() {
 
   const resultado =
@@ -438,15 +527,20 @@ export async function buscarWhatsApp() {
       )
     );
 
-  if (resultado.exists()) {
+
+  if (
+    resultado.exists()
+  ) {
 
     return resultado.data();
 
   }
 
+
   return null;
 
 }
+
 
 // ===============================
 // HORÁRIOS
@@ -470,6 +564,7 @@ export async function salvarHorarios(
 
 }
 
+
 export async function buscarHorarios() {
 
   const resultado =
@@ -481,11 +576,15 @@ export async function buscarHorarios() {
       )
     );
 
-  if (resultado.exists()) {
+
+  if (
+    resultado.exists()
+  ) {
 
     return resultado.data();
 
   }
+
 
   return null;
 
