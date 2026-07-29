@@ -7,13 +7,22 @@ import {
   salvarAgendamento,
   listarAgendamentos,
   buscarHorarios,
+  listarServicos,
 } from "@/lib/firestore";
+
+type Servico = {
+  id: string;
+  nome: string;
+  valor: number;
+  duracao: number;
+  status: string;
+};
 
 export default function AgendamentoForm() {
   const searchParams = useSearchParams();
 
   const servicoSelecionado =
-    searchParams.get("servico") || "Corte social";
+    searchParams.get("servico") || "";
 
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -21,19 +30,18 @@ export default function AgendamentoForm() {
   const [data, setData] = useState("");
   const [horario, setHorario] = useState("");
 
+  const [servicos, setServicos] = useState<Servico[]>([]);
+
   const [horariosOcupados, setHorariosOcupados] =
     useState<string[]>([]);
 
   const [mensagem, setMensagem] = useState("");
 
-  // WhatsApp
   const [whatsappLink, setWhatsappLink] = useState("");
 
-  // Horários configurados pelo administrador
   const [inicio, setInicio] = useState("10:00");
   const [fim, setFim] = useState("17:00");
 
-  // Dias de funcionamento
   const [diasFuncionamento, setDiasFuncionamento] = useState({
     segunda: false,
     terca: true,
@@ -44,18 +52,44 @@ export default function AgendamentoForm() {
     domingo: false,
   });
 
-  const servicos = [
-    "Corte social",
-    "Corte navalhado",
-    "Low Fade",
-    "Mid Fade",
-    "Corte + barba",
-    "Pigmentação",
-    "Luzes",
-    "Nevou",
-  ];
-
   // ===============================
+  // CARREGAR SERVIÇOS
+  // ===============================
+
+  useEffect(() => {
+    carregarServicos();
+  }, []);
+
+  async function carregarServicos() {
+    try {
+      const dados = await listarServicos();
+
+      const servicosAtivos = dados.filter(
+        (servico: Servico) =>
+          servico.status === "Ativo"
+      );
+
+      setServicos(servicosAtivos);
+
+      if (
+        !servicoSelecionado &&
+        servicosAtivos.length > 0
+      ) {
+        setServico(servicosAtivos[0].nome);
+      }
+    } catch (erro) {
+      console.error(
+        "Erro ao carregar serviços:",
+        erro
+      );
+
+      setMensagem(
+        "Erro ao carregar os serviços."
+      );
+    }
+  }
+
+    // ===============================
   // CARREGAR HORÁRIOS
   // ===============================
 
@@ -158,7 +192,7 @@ export default function AgendamentoForm() {
     ];
   }
 
-    // ===============================
+  // ===============================
   // BUSCAR HORÁRIOS OCUPADOS
   // ===============================
 
@@ -228,15 +262,15 @@ export default function AgendamentoForm() {
   // ===============================
 
   async function confirmarAgendamento() {
-
     if (
       !nome ||
       !telefone ||
+      !servico ||
       !data ||
       !horario
     ) {
       setMensagem(
-        "Preencha nome, WhatsApp, data e horário."
+        "Preencha nome, WhatsApp, serviço, data e horário."
       );
 
       return;
@@ -271,14 +305,9 @@ export default function AgendamentoForm() {
     };
 
     try {
-
       await salvarAgendamento(
         novoAgendamento
       );
-
-      // ===============================
-      // CRIAR MENSAGEM DO WHATSAPP
-      // ===============================
 
       const mensagemWhatsApp =
         `Olá! Meu nome é ${nome}.%0A%0A` +
@@ -299,9 +328,6 @@ export default function AgendamentoForm() {
         "Agendamento confirmado com sucesso! 🎉"
       );
 
-      // Limpa somente os campos do formulário.
-      // O link do WhatsApp continua aparecendo.
-
       setNome("");
       setTelefone("");
       setData("");
@@ -310,7 +336,6 @@ export default function AgendamentoForm() {
       setHorariosOcupados([]);
 
     } catch (erro) {
-
       console.error(
         "Erro ao salvar agendamento:",
         erro
@@ -319,7 +344,6 @@ export default function AgendamentoForm() {
       setMensagem(
         "Erro ao salvar agendamento."
       );
-
     }
   }
 
@@ -330,7 +354,7 @@ export default function AgendamentoForm() {
   const horariosDisponiveis =
     gerarHorarios();
 
-  return (
+      return (
     <main className="min-h-screen bg-gray-100 p-8">
 
       <h1 className="text-3xl font-bold text-center">
@@ -383,18 +407,21 @@ export default function AgendamentoForm() {
             setServico(e.target.value)
           }
         >
+          <option value="">
+            ✂️ Escolha o serviço
+          </option>
 
-          {servicos.map(
-            (item) => (
-              <option
-                key={item}
-                value={item}
-              >
-                {item}
-              </option>
-            )
-          )}
-
+          {servicos.map((item) => (
+            <option
+              key={item.id}
+              value={item.nome}
+            >
+              {item.nome} - R${" "}
+              {Number(item.valor || 0)
+                .toFixed(2)
+                .replace(".", ",")}
+            </option>
+          ))}
         </select>
 
         {/* DATA */}
@@ -408,9 +435,7 @@ export default function AgendamentoForm() {
           className="w-full border p-3 rounded mb-4 text-black"
           value={data}
           onChange={(e) =>
-            escolherData(
-              e.target.value
-            )
+            escolherData(e.target.value)
           }
         />
 
@@ -424,42 +449,33 @@ export default function AgendamentoForm() {
           className="w-full border p-3 rounded mb-4 text-black bg-white"
           value={horario}
           onChange={(e) =>
-            setHorario(
-              e.target.value
-            )
+            setHorario(e.target.value)
           }
         >
-
           <option value="">
             Escolha um horário
           </option>
 
-          {horariosDisponiveis.map(
-            (hora) => {
+          {horariosDisponiveis.map((hora) => {
+            const ocupado =
+              horariosOcupados.includes(hora);
 
-              const ocupado =
-                horariosOcupados.includes(
-                  hora
-                );
-
-              return (
-                <option
-                  key={hora}
-                  value={hora}
-                  disabled={ocupado}
-                >
-                  {hora}
-                  {ocupado
-                    ? " - Ocupado"
-                    : ""}
-                </option>
-              );
-            }
-          )}
-
+            return (
+              <option
+                key={hora}
+                value={hora}
+                disabled={ocupado}
+              >
+                {hora}
+                {ocupado
+                  ? " - Ocupado"
+                  : ""}
+              </option>
+            );
+          })}
         </select>
 
-                {/* BOTÃO CONFIRMAR */}
+        {/* BOTÃO CONFIRMAR */}
 
         <button
           onClick={confirmarAgendamento}
