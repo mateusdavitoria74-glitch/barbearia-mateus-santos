@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 import ClientLayout from "@/components/ClientLayout";
-
+import NotificationPermission from "@/components/NotificationPermission";
 
 export const metadata: Metadata = {
   title: "Barbearia Mateus Santos",
@@ -22,36 +22,24 @@ export const metadata: Metadata = {
   },
 };
 
-
 export const viewport = {
   themeColor: "#111111",
 };
-
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-
   return (
-
     <html lang="pt-BR">
-
       <body>
+        <NotificationPermission />
 
         <ClientLayout>
-
           {children}
-
         </ClientLayout>
-
-
       </body>
-
     </html>
-
   );
-
 }
