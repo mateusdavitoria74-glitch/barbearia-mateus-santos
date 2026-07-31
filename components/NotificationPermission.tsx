@@ -2,10 +2,12 @@
 
 import { useEffect } from "react";
 import { getMessaging, getToken } from "firebase/messaging";
-import app from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
+
+import app, { db } from "@/lib/firebase";
 
 const VAPID_KEY =
-  "BCgPLmc1NBqbuwt92FFHK_qnIZHjh4Is_P-Bk52CtgYEpbEfMJEtp_Z1fOe2fAAtIy9S1cnIP4ZpYYsYM6zj9Iw";
+  "BCgPLmc1NBqbuwt92FFHK_qnIZHjh4Is_P-Bk52CtgYEpbEfMJEt9S1cnIP4ZpYYsYM6zj9Iw";
 
 export default function NotificationPermission() {
   useEffect(() => {
@@ -24,7 +26,7 @@ export default function NotificationPermission() {
         const permissao = await Notification.requestPermission();
 
         if (permissao !== "granted") {
-          console.log("Permissão para notificações não concedida.");
+          console.log("Permissão não concedida.");
           return;
         }
 
@@ -40,11 +42,25 @@ export default function NotificationPermission() {
           serviceWorkerRegistration: registration,
         });
 
-        if (token) {
-          console.log("Token FCM:", token);
-        } else {
+        if (!token) {
           console.log("Não foi possível obter o token FCM.");
+          return;
         }
+
+        console.log("Token FCM obtido com sucesso.");
+
+        await setDoc(
+          doc(db, "notificacoes", "administrador"),
+          {
+            token,
+            atualizadoEm: new Date(),
+          },
+          {
+            merge: true,
+          }
+        );
+
+        console.log("Token salvo no Firestore.");
       } catch (error) {
         console.error(
           "Erro ao configurar notificações:",
