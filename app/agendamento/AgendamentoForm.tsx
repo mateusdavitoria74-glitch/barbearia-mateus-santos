@@ -39,6 +39,11 @@ export default function AgendamentoForm() {
 
   const [whatsappLink, setWhatsappLink] = useState("");
 
+  const [agendamentoConfirmado, setAgendamentoConfirmado] =
+    useState(false);
+
+  const [salvando, setSalvando] = useState(false);
+
   const [inicio, setInicio] = useState("10:00");
   const [fim, setFim] = useState("17:00");
 
@@ -89,7 +94,7 @@ export default function AgendamentoForm() {
     }
   }
 
-    // ===============================
+  // ===============================
   // CARREGAR HORÁRIOS
   // ===============================
 
@@ -192,7 +197,7 @@ export default function AgendamentoForm() {
     ];
   }
 
-  // ===============================
+    // ===============================
   // BUSCAR HORÁRIOS OCUPADOS
   // ===============================
 
@@ -217,7 +222,6 @@ export default function AgendamentoForm() {
         );
 
       setHorariosOcupados(ocupados);
-
     } catch (erro) {
       console.error(
         "Erro ao buscar horários:",
@@ -262,6 +266,10 @@ export default function AgendamentoForm() {
   // ===============================
 
   async function confirmarAgendamento() {
+    if (salvando || agendamentoConfirmado) {
+      return;
+    }
+
     if (
       !nome ||
       !telefone ||
@@ -305,6 +313,9 @@ export default function AgendamentoForm() {
     };
 
     try {
+      setSalvando(true);
+      setMensagem("Confirmando seu agendamento...");
+
       await salvarAgendamento(
         novoAgendamento
       );
@@ -324,6 +335,8 @@ export default function AgendamentoForm() {
 
       setWhatsappLink(linkWhatsApp);
 
+      setAgendamentoConfirmado(true);
+
       setMensagem(
         "Agendamento confirmado com sucesso! 🎉"
       );
@@ -342,8 +355,11 @@ export default function AgendamentoForm() {
       );
 
       setMensagem(
-        "Erro ao salvar agendamento."
+        "Erro ao salvar agendamento. Tente novamente."
       );
+
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -354,7 +370,7 @@ export default function AgendamentoForm() {
   const horariosDisponiveis =
     gerarHorarios();
 
-      return (
+  return (
     <main className="min-h-screen bg-gray-100 p-8">
 
       <h1 className="text-3xl font-bold text-center">
@@ -376,6 +392,7 @@ export default function AgendamentoForm() {
           onChange={(e) =>
             setNome(e.target.value)
           }
+          disabled={agendamentoConfirmado}
         />
 
         {/* WHATSAPP */}
@@ -392,6 +409,7 @@ export default function AgendamentoForm() {
           onChange={(e) =>
             setTelefone(e.target.value)
           }
+          disabled={agendamentoConfirmado}
         />
 
         {/* SERVIÇO */}
@@ -406,6 +424,7 @@ export default function AgendamentoForm() {
           onChange={(e) =>
             setServico(e.target.value)
           }
+          disabled={agendamentoConfirmado}
         >
           <option value="">
             ✂️ Escolha o serviço
@@ -424,7 +443,7 @@ export default function AgendamentoForm() {
           ))}
         </select>
 
-        {/* DATA */}
+                {/* DATA */}
 
         <label className="block mb-2 font-bold">
           Data
@@ -437,6 +456,7 @@ export default function AgendamentoForm() {
           onChange={(e) =>
             escolherData(e.target.value)
           }
+          disabled={agendamentoConfirmado}
         />
 
         {/* HORÁRIO */}
@@ -451,6 +471,7 @@ export default function AgendamentoForm() {
           onChange={(e) =>
             setHorario(e.target.value)
           }
+          disabled={agendamentoConfirmado}
         >
           <option value="">
             Escolha um horário
@@ -479,17 +500,37 @@ export default function AgendamentoForm() {
 
         <button
           onClick={confirmarAgendamento}
-          className="w-full bg-black text-white p-3 rounded-xl font-bold hover:bg-gray-800"
+          disabled={
+            salvando ||
+            agendamentoConfirmado
+          }
+          className={`w-full p-3 rounded-xl font-bold text-white transition ${
+            agendamentoConfirmado
+              ? "bg-green-600 cursor-default"
+              : salvando
+              ? "bg-gray-500 cursor-wait"
+              : "bg-black hover:bg-gray-800"
+          }`}
         >
-          Confirmar Agendamento
+          {agendamentoConfirmado
+            ? "✅ Agendamento confirmado!"
+            : salvando
+            ? "⏳ Confirmando..."
+            : "Confirmar Agendamento"}
         </button>
 
         {/* MENSAGEM */}
 
         {mensagem && (
-          <p className="mt-4 text-center font-bold">
+          <div
+            className={`mt-4 text-center font-bold p-3 rounded-xl ${
+              agendamentoConfirmado
+                ? "bg-green-100 text-green-700"
+                : "text-gray-800"
+            }`}
+          >
             {mensagem}
-          </p>
+          </div>
         )}
 
         {/* WHATSAPP */}
