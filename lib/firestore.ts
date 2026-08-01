@@ -11,7 +11,6 @@ import {
   getDoc,
 } from "firebase/firestore";
 
-
 // ===============================
 // AGENDAMENTOS
 // ===============================
@@ -21,7 +20,6 @@ const agendamentosRef = collection(
   "agendamentos"
 );
 
-
 // ===============================
 // SALVAR AGENDAMENTO + CLIENTE
 // ===============================
@@ -29,27 +27,20 @@ const agendamentosRef = collection(
 export async function salvarAgendamento(
   dados: any
 ) {
-
   // Salva o agendamento
   await addDoc(
     agendamentosRef,
     dados
   );
 
-
   // Se tiver WhatsApp, salva o cliente
   if (dados.telefone) {
-
     const clientesSnapshot =
-      await getDocs(
-        clientesRef
-      );
-
+      await getDocs(clientesRef);
 
     const clienteExistente =
       clientesSnapshot.docs.find(
         (documento) => {
-
           const cliente =
             documento.data();
 
@@ -57,14 +48,10 @@ export async function salvarAgendamento(
             cliente.telefone ===
             dados.telefone
           );
-
         }
       );
 
-
-    // Se o cliente ainda não existe
     if (!clienteExistente) {
-
       await addDoc(
         clientesRef,
         {
@@ -73,38 +60,67 @@ export async function salvarAgendamento(
           criadoEm: new Date(),
         }
       );
-
     }
-
   }
 
-}
+  // ===============================
+  // NOTIFICAÇÃO
+  // ===============================
 
+  try {
+    const resposta =
+      await fetch(
+        "/api/notificacoes/agendamento",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify(
+            dados
+          ),
+        }
+      );
+
+    if (!resposta.ok) {
+      console.error(
+        "Erro ao enviar notificação:",
+        await resposta.text()
+      );
+    } else {
+      console.log(
+        "Notificação enviada com sucesso."
+      );
+    }
+
+  } catch (erro) {
+    console.error(
+      "Erro ao enviar notificação:",
+      erro
+    );
+  }
+}
 
 // ===============================
 // LISTAR AGENDAMENTOS
 // ===============================
 
 export async function listarAgendamentos() {
-
   const snapshot =
     await getDocs(
       agendamentosRef
     );
 
-
   return snapshot.docs.map(
     (documento) => ({
-
       id: documento.id,
-
       ...documento.data(),
-
     })
   );
-
 }
-
 
 // ===============================
 // ATUALIZAR STATUS
@@ -114,7 +130,6 @@ export async function atualizarStatusAgendamento(
   id: string,
   status: string
 ) {
-
   const agendamentoRef =
     doc(
       db,
@@ -122,16 +137,13 @@ export async function atualizarStatusAgendamento(
       id
     );
 
-
   await updateDoc(
     agendamentoRef,
     {
       status,
     }
   );
-
 }
-
 
 // ===============================
 // AGENDAMENTOS EM TEMPO REAL
@@ -140,30 +152,20 @@ export async function atualizarStatusAgendamento(
 export function ouvirAgendamentos(
   callback: (dados: any[]) => void
 ) {
-
   return onSnapshot(
     agendamentosRef,
     (snapshot) => {
-
       callback(
-
         snapshot.docs.map(
           (documento) => ({
-
             id: documento.id,
-
             ...documento.data(),
-
           })
         )
-
       );
-
     }
   );
-
 }
-
 
 // ===============================
 // CLIENTES
@@ -174,7 +176,6 @@ const clientesRef = collection(
   "clientes"
 );
 
-
 // ===============================
 // SALVAR CLIENTE
 // ===============================
@@ -182,39 +183,29 @@ const clientesRef = collection(
 export async function salvarCliente(
   dados: any
 ) {
-
   await addDoc(
     clientesRef,
     dados
   );
-
 }
-
 
 // ===============================
 // LISTAR CLIENTES
 // ===============================
 
 export async function listarClientes() {
-
   const snapshot =
     await getDocs(
       clientesRef
     );
 
-
   return snapshot.docs.map(
     (documento) => ({
-
       id: documento.id,
-
       ...documento.data(),
-
     })
   );
-
 }
-
 
 // ===============================
 // CLIENTES EM TEMPO REAL
@@ -223,39 +214,29 @@ export async function listarClientes() {
 export function ouvirClientes(
   callback: (dados: any[]) => void
 ) {
-
   return onSnapshot(
     clientesRef,
     (snapshot) => {
-
       callback(
-
         snapshot.docs.map(
           (documento) => ({
-
             id: documento.id,
-
             ...documento.data(),
-
           })
         )
-
       );
-
     }
   );
-
 }
 
 // ===============================
-// BLOQUEIOS DE HORÁRIOS
+// BLOQUEIOS
 // ===============================
 
 const bloqueiosRef = collection(
   db,
   "bloqueios"
 );
-
 
 // ===============================
 // SALVAR BLOQUEIO
@@ -264,39 +245,29 @@ const bloqueiosRef = collection(
 export async function salvarBloqueio(
   dados: any
 ) {
-
   await addDoc(
     bloqueiosRef,
     dados
   );
-
 }
-
 
 // ===============================
 // LISTAR BLOQUEIOS
 // ===============================
 
 export async function listarBloqueios() {
-
   const snapshot =
     await getDocs(
       bloqueiosRef
     );
 
-
   return snapshot.docs.map(
     (documento) => ({
-
       id: documento.id,
-
       ...documento.data(),
-
     })
   );
-
 }
-
 
 // ===============================
 // SERVIÇOS
@@ -307,7 +278,6 @@ const servicosRef = collection(
   "servicos"
 );
 
-
 // ===============================
 // SALVAR SERVIÇO
 // ===============================
@@ -315,36 +285,28 @@ const servicosRef = collection(
 export async function salvarServico(
   dados: any
 ) {
-
   await addDoc(
     servicosRef,
     dados
   );
-
 }
-
 
 // ===============================
 // LISTAR SERVIÇOS
 // ===============================
 
 export async function listarServicos() {
-
   const snapshot =
     await getDocs(
       servicosRef
     );
 
-
   return snapshot.docs.map(
     (documento) => {
-
       const dados =
         documento.data();
 
-
       return {
-
         id: documento.id,
 
         nome:
@@ -362,14 +324,10 @@ export async function listarServicos() {
 
         status:
           dados.status || "Ativo",
-
       };
-
     }
   );
-
 }
-
 
 // ===============================
 // ATUALIZAR SERVIÇO
@@ -379,7 +337,6 @@ export async function atualizarServico(
   id: string,
   dados: any
 ) {
-
   const servicoRef =
     doc(
       db,
@@ -387,14 +344,11 @@ export async function atualizarServico(
       id
     );
 
-
   await updateDoc(
     servicoRef,
     dados
   );
-
 }
-
 
 // ===============================
 // PERFIL ADMINISTRADOR
@@ -403,7 +357,6 @@ export async function atualizarServico(
 export async function salvarPerfil(
   dados: any
 ) {
-
   await setDoc(
     doc(
       db,
@@ -415,12 +368,9 @@ export async function salvarPerfil(
       merge: true,
     }
   );
-
 }
 
-
 export async function buscarPerfil() {
-
   const resultado =
     await getDoc(
       doc(
@@ -430,20 +380,12 @@ export async function buscarPerfil() {
       )
     );
 
-
-  if (
-    resultado.exists()
-  ) {
-
+  if (resultado.exists()) {
     return resultado.data();
-
   }
 
-
   return null;
-
 }
-
 
 // ===============================
 // BARBEARIA
@@ -452,7 +394,6 @@ export async function buscarPerfil() {
 export async function salvarBarbearia(
   dados: any
 ) {
-
   await setDoc(
     doc(
       db,
@@ -464,12 +405,9 @@ export async function salvarBarbearia(
       merge: true,
     }
   );
-
 }
 
-
 export async function buscarBarbearia() {
-
   const resultado =
     await getDoc(
       doc(
@@ -479,18 +417,11 @@ export async function buscarBarbearia() {
       )
     );
 
-
-  if (
-    resultado.exists()
-  ) {
-
+  if (resultado.exists()) {
     return resultado.data();
-
   }
 
-
   return null;
-
 }
 
 // ===============================
@@ -500,7 +431,6 @@ export async function buscarBarbearia() {
 export async function salvarWhatsApp(
   dados: any
 ) {
-
   await setDoc(
     doc(
       db,
@@ -512,12 +442,9 @@ export async function salvarWhatsApp(
       merge: true,
     }
   );
-
 }
 
-
 export async function buscarWhatsApp() {
-
   const resultado =
     await getDoc(
       doc(
@@ -527,20 +454,12 @@ export async function buscarWhatsApp() {
       )
     );
 
-
-  if (
-    resultado.exists()
-  ) {
-
+  if (resultado.exists()) {
     return resultado.data();
-
   }
 
-
   return null;
-
 }
-
 
 // ===============================
 // HORÁRIOS
@@ -549,7 +468,6 @@ export async function buscarWhatsApp() {
 export async function salvarHorarios(
   dados: any
 ) {
-
   await setDoc(
     doc(
       db,
@@ -561,12 +479,9 @@ export async function salvarHorarios(
       merge: true,
     }
   );
-
 }
 
-
 export async function buscarHorarios() {
-
   const resultado =
     await getDoc(
       doc(
@@ -576,16 +491,9 @@ export async function buscarHorarios() {
       )
     );
 
-
-  if (
-    resultado.exists()
-  ) {
-
+  if (resultado.exists()) {
     return resultado.data();
-
   }
 
-
   return null;
-
 }
