@@ -7,12 +7,16 @@ import { doc, setDoc } from "firebase/firestore";
 import app, { db } from "@/lib/firebase";
 
 const VAPID_KEY =
-  "BCgPLmc1NBqbuwt92FFHK_qnIZHjh4Is_P-Bk52CtgYEpbEfMJEt9S1cnIP4ZpYYsYM6zj9Iw";
+  "BLsYdOoHwAyqkRdLv_rnsZkdirLwt8GF0TheO4A17du9HSvORaNIR1yXtHcXiy4En7EsraP8u8ci9mLYEmm6L4I";
 
 export default function NotificationPermission() {
   useEffect(() => {
-    async function configurarNotificacoes() {
+    const configurarNotificacoes = async () => {
       try {
+        if (typeof window === "undefined") {
+          return;
+        }
+
         if (!("Notification" in window)) {
           console.log("Este navegador não suporta notificações.");
           return;
@@ -23,10 +27,14 @@ export default function NotificationPermission() {
           return;
         }
 
-        const permissao = await Notification.requestPermission();
+        let permissao = Notification.permission;
+
+        if (permissao === "default") {
+          permissao = await Notification.requestPermission();
+        }
 
         if (permissao !== "granted") {
-          console.log("Permissão não concedida.");
+          console.log("Permissão para notificações não concedida.");
           return;
         }
 
@@ -34,6 +42,10 @@ export default function NotificationPermission() {
           await navigator.serviceWorker.register(
             "/firebase-messaging-sw.js"
           );
+
+        await navigator.serviceWorker.ready;
+
+        console.log("Service Worker registrado.");
 
         const messaging = getMessaging(app);
 
@@ -67,7 +79,7 @@ export default function NotificationPermission() {
           error
         );
       }
-    }
+    };
 
     configurarNotificacoes();
   }, []);
