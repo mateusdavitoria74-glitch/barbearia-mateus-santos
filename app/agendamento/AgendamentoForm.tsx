@@ -18,6 +18,16 @@ type Servico = {
   status: string;
 };
 
+type Agendamento = {
+  id?: string;
+  nome: string;
+  telefone: string;
+  servico: string;
+  data: string;
+  horario: string;
+  status: string;
+};
+
 export default function AgendamentoForm() {
   const searchParams = useSearchParams();
 
@@ -26,36 +36,47 @@ export default function AgendamentoForm() {
 
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [servico, setServico] = useState(servicoSelecionado);
+  const [servico, setServico] =
+    useState(servicoSelecionado);
+
   const [data, setData] = useState("");
-  const [horario, setHorario] = useState("");
+  const [horario, setHorario] =
+    useState("");
 
-  const [servicos, setServicos] = useState<Servico[]>([]);
+  const [servicos, setServicos] =
+    useState<Servico[]>([]);
 
-  const [horariosOcupados, setHorariosOcupados] =
-    useState<string[]>([]);
+  const [agendamentosDoDia, setAgendamentosDoDia] =
+    useState<Agendamento[]>([]);
 
-  const [mensagem, setMensagem] = useState("");
+  const [mensagem, setMensagem] =
+    useState("");
 
-  const [whatsappLink, setWhatsappLink] = useState("");
+  const [whatsappLink, setWhatsappLink] =
+    useState("");
 
   const [agendamentoConfirmado, setAgendamentoConfirmado] =
     useState(false);
 
-  const [salvando, setSalvando] = useState(false);
+  const [salvando, setSalvando] =
+    useState(false);
 
-  const [inicio, setInicio] = useState("10:00");
-  const [fim, setFim] = useState("17:00");
+  const [inicio, setInicio] =
+    useState("10:00");
 
-  const [diasFuncionamento, setDiasFuncionamento] = useState({
-    segunda: false,
-    terca: true,
-    quarta: true,
-    quinta: true,
-    sexta: true,
-    sabado: true,
-    domingo: false,
-  });
+  const [fim, setFim] =
+    useState("17:00");
+
+  const [diasFuncionamento, setDiasFuncionamento] =
+    useState({
+      segunda: false,
+      terca: true,
+      quarta: true,
+      quinta: true,
+      sexta: true,
+      sabado: true,
+      domingo: false,
+    });
 
   // ===============================
   // CARREGAR SERVIÇOS
@@ -69,18 +90,33 @@ export default function AgendamentoForm() {
     try {
       const dados = await listarServicos();
 
-      const servicosAtivos = dados.filter(
-        (servico: Servico) =>
-          servico.status === "Ativo"
+      const servicosAtivos =
+        dados.filter(
+          (item: any) =>
+            item.status === "Ativo"
+        );
+
+      setServicos(
+        servicosAtivos as Servico[]
       );
 
-      setServicos(servicosAtivos);
-
       if (
-        !servicoSelecionado &&
+        servicoSelecionado &&
+        servicosAtivos.some(
+          (item: any) =>
+            item.nome ===
+            servicoSelecionado
+        )
+      ) {
+        setServico(
+          servicoSelecionado
+        );
+      } else if (
         servicosAtivos.length > 0
       ) {
-        setServico(servicosAtivos[0].nome);
+        setServico(
+          servicosAtivos[0].nome
+        );
       }
     } catch (erro) {
       console.error(
@@ -104,14 +140,48 @@ export default function AgendamentoForm() {
 
   async function carregarConfiguracaoHorarios() {
     try {
-      const dados = await buscarHorarios();
+      const dados =
+        await buscarHorarios();
 
       if (dados) {
-        setInicio(dados.inicio || "10:00");
-        setFim(dados.fim || "17:00");
+        setInicio(
+          dados.inicio || "10:00"
+        );
+
+        setFim(
+          dados.fim || "17:00"
+        );
 
         if (dados.dias) {
-          setDiasFuncionamento(dados.dias);
+          setDiasFuncionamento({
+            segunda:
+              dados.dias.segunda ??
+              false,
+
+            terca:
+              dados.dias.terca ??
+              true,
+
+            quarta:
+              dados.dias.quarta ??
+              true,
+
+            quinta:
+              dados.dias.quinta ??
+              true,
+
+            sexta:
+              dados.dias.sexta ??
+              true,
+
+            sabado:
+              dados.dias.sabado ??
+              true,
+
+            domingo:
+              dados.dias.domingo ??
+              false,
+          });
         }
       }
     } catch (erro) {
@@ -123,41 +193,281 @@ export default function AgendamentoForm() {
   }
 
   // ===============================
-  // GERAR HORÁRIOS
+  // HORA -> MINUTOS
+  // ===============================
+
+  function horaParaMinutos(
+    hora: string
+  ) {
+    const partes =
+      hora.split(":");
+
+    const horas =
+      Number(partes[0]);
+
+    const minutos =
+      Number(partes[1]);
+
+    return (
+      horas * 60 +
+      minutos
+    );
+  }
+
+  // ===============================
+  // MINUTOS -> HORA
+  // ===============================
+
+  function minutosParaHora(
+    minutos: number
+  ) {
+    const horas =
+      Math.floor(minutos / 60);
+
+    const minutosRestantes =
+      minutos % 60;
+
+    return `${horas
+      .toString()
+      .padStart(2, "0")}:${minutosRestantes
+      .toString()
+      .padStart(2, "0")}`;
+  }
+
+  // ===============================
+  // DURAÇÃO DO SERVIÇO SELECIONADO
+  // ===============================
+
+  function obterDuracaoServico() {
+    const servicoAtual =
+      servicos.find(
+        (item) =>
+          item.nome === servico
+      );
+
+    const duracao =
+      Number(
+        servicoAtual?.duracao
+      );
+
+    if (
+      Number.isFinite(duracao) &&
+      duracao > 0
+    ) {
+      return duracao;
+    }
+
+    return 30;
+  }
+
+  // ===============================
+  // DURAÇÃO DE UM AGENDAMENTO
+  // ===============================
+
+  function obterDuracaoAgendamento(
+    agendamento: Agendamento
+  ) {
+    const servicoAgendado =
+      servicos.find(
+        (item) =>
+          item.nome ===
+          agendamento.servico
+      );
+
+    const duracao =
+      Number(
+        servicoAgendado?.duracao
+      );
+
+    if (
+      Number.isFinite(duracao) &&
+      duracao > 0
+    ) {
+      return duracao;
+    }
+
+    return 30;
+  }
+
+  // ===============================
+  // VERIFICAR CONFLITO
+  // ===============================
+
+  function existeConflito(
+    horarioInicio: number,
+    duracao: number
+  ) {
+    const horarioFim =
+      horarioInicio + duracao;
+
+    return agendamentosDoDia.some(
+      (agendamento) => {
+        if (
+          agendamento.status ===
+          "Cancelado"
+        ) {
+          return false;
+        }
+
+        if (
+          !agendamento.horario
+        ) {
+          return false;
+        }
+
+        const inicioExistente =
+          horaParaMinutos(
+            agendamento.horario
+          );
+
+        const duracaoExistente =
+          obterDuracaoAgendamento(
+            agendamento
+          );
+
+        const fimExistente =
+          inicioExistente +
+          duracaoExistente;
+
+        return (
+          horarioInicio <
+            fimExistente &&
+          horarioFim >
+            inicioExistente
+        );
+      }
+    );
+  }
+
+  // ===============================
+  // ENCONTRAR FIM DO CONFLITO
+  // ===============================
+
+  function obterFimDoConflito(
+    horarioInicio: number,
+    duracao: number
+  ) {
+    const horarioFim =
+      horarioInicio + duracao;
+
+    let maiorFim = horarioFim;
+
+    for (
+      const agendamento of
+        agendamentosDoDia
+    ) {
+      if (
+        agendamento.status ===
+        "Cancelado"
+      ) {
+        continue;
+      }
+
+      if (
+        !agendamento.horario
+      ) {
+        continue;
+      }
+
+      const inicioExistente =
+        horaParaMinutos(
+          agendamento.horario
+        );
+
+      const duracaoExistente =
+        obterDuracaoAgendamento(
+          agendamento
+        );
+
+      const fimExistente =
+        inicioExistente +
+        duracaoExistente;
+
+      const conflito =
+        horarioInicio <
+          fimExistente &&
+        horarioFim >
+          inicioExistente;
+
+      if (
+        conflito &&
+        fimExistente > maiorFim
+      ) {
+        maiorFim =
+          fimExistente;
+      }
+    }
+
+    return maiorFim;
+  }
+
+  // ===============================
+  // GERAR HORÁRIOS DISPONÍVEIS
   // ===============================
 
   function gerarHorarios() {
     const lista: string[] = [];
 
-    const [horaInicio, minutoInicio] =
-      inicio.split(":").map(Number);
+    if (
+      !servico ||
+      !data
+    ) {
+      return lista;
+    }
 
-    const [horaFim, minutoFim] =
-      fim.split(":").map(Number);
-
-    let inicioMinutos =
-      horaInicio * 60 + minutoInicio;
+    const inicioMinutos =
+      horaParaMinutos(
+        inicio
+      );
 
     const fimMinutos =
-      horaFim * 60 + minutoFim;
-
-    while (inicioMinutos < fimMinutos) {
-      const hora = Math.floor(
-        inicioMinutos / 60
+      horaParaMinutos(
+        fim
       );
 
-      const minuto =
-        inicioMinutos % 60;
+    const duracaoServico =
+      obterDuracaoServico();
 
-      lista.push(
-        `${hora
-          .toString()
-          .padStart(2, "0")}:${minuto
-          .toString()
-          .padStart(2, "0")}`
-      );
+      console.log(
+  "SERVIÇO SELECIONADO:",
+  servico
+);
 
-      inicioMinutos += 60;
+console.log(
+  "DURAÇÃO:",
+  obterDuracaoServico()
+);
+
+    let horarioAtual =
+      inicioMinutos;
+
+    while (
+      horarioAtual +
+        duracaoServico <=
+      fimMinutos
+    ) {
+      const conflito =
+        existeConflito(
+          horarioAtual,
+          duracaoServico
+        );
+
+      if (!conflito) {
+        lista.push(
+          minutosParaHora(
+            horarioAtual
+          )
+        );
+
+        horarioAtual +=
+          duracaoServico;
+      } else {
+        horarioAtual =
+          obterFimDoConflito(
+            horarioAtual,
+            duracaoServico
+          );
+      }
     }
 
     return lista;
@@ -174,11 +484,13 @@ export default function AgendamentoForm() {
       return false;
     }
 
-    const dataSelecionada = new Date(
-      valorData + "T00:00:00"
-    );
+    const dataSelecionada =
+      new Date(
+        `${valorData}T00:00:00`
+      );
 
-    const dia = dataSelecionada.getDay();
+    const dia =
+      dataSelecionada.getDay();
 
     const nomesDias = [
       "domingo",
@@ -190,7 +502,8 @@ export default function AgendamentoForm() {
       "sabado",
     ];
 
-    const nomeDia = nomesDias[dia];
+    const nomeDia =
+      nomesDias[dia];
 
     return !diasFuncionamento[
       nomeDia as keyof typeof diasFuncionamento
@@ -198,11 +511,12 @@ export default function AgendamentoForm() {
   }
 
     // ===============================
-  // BUSCAR HORÁRIOS OCUPADOS
+  // BUSCAR AGENDAMENTOS DO DIA
   // ===============================
 
-  async function buscarHorariosOcupados() {
+  async function buscarAgendamentosDoDia() {
     if (!data) {
+      setAgendamentosDoDia([]);
       return;
     }
 
@@ -210,33 +524,38 @@ export default function AgendamentoForm() {
       const agendamentos =
         await listarAgendamentos();
 
-      const ocupados = agendamentos
-        .filter(
+      const agendamentosDoDia =
+        agendamentos.filter(
           (item: any) =>
             item.data === data &&
-            item.status !== "Cancelado"
-        )
-        .map(
-          (item: any) =>
-            item.horario
+            item.status !==
+              "Cancelado"
         );
 
-      setHorariosOcupados(ocupados);
+      setAgendamentosDoDia(
+        agendamentosDoDia as unknown as Agendamento[]
+      );
     } catch (erro) {
       console.error(
-        "Erro ao buscar horários:",
+        "Erro ao buscar agendamentos:",
         erro
       );
+
+      setAgendamentosDoDia([]);
     }
   }
 
   useEffect(() => {
     if (data) {
-      buscarHorariosOcupados();
+      buscarAgendamentosDoDia();
     } else {
-      setHorariosOcupados([]);
+      setAgendamentosDoDia([]);
     }
-  }, [data]);
+  }, [
+    data,
+    servico,
+    servicos,
+  ]);
 
   // ===============================
   // ESCOLHER DATA
@@ -245,7 +564,11 @@ export default function AgendamentoForm() {
   function escolherData(
     novaData: string
   ) {
-    if (verificarDiaFechado(novaData)) {
+    if (
+      verificarDiaFechado(
+        novaData
+      )
+    ) {
       setMensagem(
         "Não atendemos neste dia."
       );
@@ -262,11 +585,26 @@ export default function AgendamentoForm() {
   }
 
   // ===============================
+  // ESCOLHER SERVIÇO
+  // ===============================
+
+  function escolherServico(
+    novoServico: string
+  ) {
+    setServico(novoServico);
+    setHorario("");
+    setMensagem("");
+  }
+
+  // ===============================
   // CONFIRMAR AGENDAMENTO
   // ===============================
 
   async function confirmarAgendamento() {
-    if (salvando || agendamentoConfirmado) {
+    if (
+      salvando ||
+      agendamentoConfirmado
+    ) {
       return;
     }
 
@@ -284,7 +622,9 @@ export default function AgendamentoForm() {
       return;
     }
 
-    if (verificarDiaFechado(data)) {
+    if (
+      verificarDiaFechado(data)
+    ) {
       setMensagem(
         "Não atendemos neste dia."
       );
@@ -292,33 +632,156 @@ export default function AgendamentoForm() {
       return;
     }
 
-    if (
-      horariosOcupados.includes(horario)
-    ) {
-      setMensagem(
-        "Esse horário já está ocupado."
+    try {
+      // ===============================
+      // ATUALIZA DO FIREBASE
+      // ===============================
+
+      const agendamentos =
+        await listarAgendamentos();
+
+      const agendamentosDoDiaAtual =
+        agendamentos.filter(
+          (item: any) =>
+            item.data === data &&
+            item.status !==
+              "Cancelado"
+        ) as unknown as Agendamento[];
+
+      setAgendamentosDoDia(
+        agendamentosDoDiaAtual
       );
 
-      return;
-    }
+      // ===============================
+      // DURAÇÃO DO SERVIÇO
+      // ===============================
 
-    const novoAgendamento = {
-      nome,
-      telefone,
-      servico,
-      data,
-      horario,
-      status: "Agendado",
-      criadoEm: new Date(),
-    };
+      const servicoAtual =
+        servicos.find(
+          (item) =>
+            item.nome === servico
+        );
 
-    try {
+      const duracao =
+        Number(
+          servicoAtual?.duracao
+        ) > 0
+          ? Number(
+              servicoAtual?.duracao
+            )
+          : 30;
+
+      const horarioInicio =
+        horaParaMinutos(
+          horario
+        );
+
+      const horarioFim =
+        horarioInicio +
+        duracao;
+
+      // ===============================
+      // VERIFICAR CONFLITO NOVAMENTE
+      // ===============================
+
+      const conflito =
+        agendamentosDoDiaAtual.some(
+          (agendamento) => {
+            if (
+              agendamento.status ===
+              "Cancelado"
+            ) {
+              return false;
+            }
+
+            if (
+              !agendamento.horario
+            ) {
+              return false;
+            }
+
+            const inicioExistente =
+              horaParaMinutos(
+                agendamento.horario
+              );
+
+            const duracaoExistente =
+              obterDuracaoAgendamento(
+                agendamento
+              );
+
+            const fimExistente =
+              inicioExistente +
+              duracaoExistente;
+
+            return (
+              horarioInicio <
+                fimExistente &&
+              horarioFim >
+                inicioExistente
+            );
+          }
+        );
+
+      if (conflito) {
+        setMensagem(
+          "Esse horário não está mais disponível. Escolha outro horário."
+        );
+
+        setHorario("");
+
+        await buscarAgendamentosDoDia();
+
+        return;
+      }
+
+      // ===============================
+      // VERIFICAR LIMITE DO EXPEDIENTE
+      // ===============================
+
+      const fimExpediente =
+        horaParaMinutos(fim);
+
+      if (
+        horarioFim >
+        fimExpediente
+      ) {
+        setMensagem(
+          "Esse serviço não cabe no horário de atendimento."
+        );
+
+        setHorario("");
+
+        return;
+      }
+
+      // ===============================
+      // SALVAR
+      // ===============================
+
+      const novoAgendamento = {
+        nome,
+        telefone,
+        servico,
+        data,
+        horario,
+        status: "Agendado",
+        criadoEm: new Date(),
+      };
+
       setSalvando(true);
-      setMensagem("Confirmando seu agendamento...");
+
+      setMensagem(
+        "Confirmando seu agendamento..."
+      );
 
       await salvarAgendamento(
         novoAgendamento
       );
+
+      // ===============================
+      // WHATSAPP
+      // ===============================
 
       const mensagemWhatsApp =
         `Olá! Meu nome é ${nome}.%0A%0A` +
@@ -328,14 +791,21 @@ export default function AgendamentoForm() {
         `🕒 Horário: ${horario}`;
 
       const telefoneLimpo =
-        telefone.replace(/\D/g, "");
+        telefone.replace(
+          /\D/g,
+          ""
+        );
 
       const linkWhatsApp =
         `https://wa.me/55${telefoneLimpo}?text=${mensagemWhatsApp}`;
 
-      setWhatsappLink(linkWhatsApp);
+      setWhatsappLink(
+        linkWhatsApp
+      );
 
-      setAgendamentoConfirmado(true);
+      setAgendamentoConfirmado(
+        true
+      );
 
       setMensagem(
         "Agendamento confirmado com sucesso! 🎉"
@@ -346,7 +816,7 @@ export default function AgendamentoForm() {
       setData("");
       setHorario("");
 
-      setHorariosOcupados([]);
+      setAgendamentosDoDia([]);
 
     } catch (erro) {
       console.error(
@@ -357,7 +827,6 @@ export default function AgendamentoForm() {
       setMensagem(
         "Erro ao salvar agendamento. Tente novamente."
       );
-
     } finally {
       setSalvando(false);
     }
@@ -392,7 +861,9 @@ export default function AgendamentoForm() {
           onChange={(e) =>
             setNome(e.target.value)
           }
-          disabled={agendamentoConfirmado}
+          disabled={
+            agendamentoConfirmado
+          }
         />
 
         {/* WHATSAPP */}
@@ -409,7 +880,9 @@ export default function AgendamentoForm() {
           onChange={(e) =>
             setTelefone(e.target.value)
           }
-          disabled={agendamentoConfirmado}
+          disabled={
+            agendamentoConfirmado
+          }
         />
 
         {/* SERVIÇO */}
@@ -422,28 +895,39 @@ export default function AgendamentoForm() {
           className="w-full border p-3 rounded mb-4 text-black bg-white"
           value={servico}
           onChange={(e) =>
-            setServico(e.target.value)
+            escolherServico(
+              e.target.value
+            )
           }
-          disabled={agendamentoConfirmado}
+          disabled={
+            agendamentoConfirmado
+          }
         >
           <option value="">
             ✂️ Escolha o serviço
           </option>
 
-          {servicos.map((item) => (
-            <option
-              key={item.id}
-              value={item.nome}
-            >
-              {item.nome} - R${" "}
-              {Number(item.valor || 0)
-                .toFixed(2)
-                .replace(".", ",")}
-            </option>
-          ))}
+          {servicos.map(
+            (item) => (
+              <option
+                key={item.id}
+                value={item.nome}
+              >
+                {item.nome} - R${" "}
+                {Number(
+                  item.valor || 0
+                )
+                  .toFixed(2)
+                  .replace(
+                    ".",
+                    ","
+                  )}
+              </option>
+            )
+          )}
         </select>
 
-                {/* DATA */}
+        {/* DATA */}
 
         <label className="block mb-2 font-bold">
           Data
@@ -454,9 +938,13 @@ export default function AgendamentoForm() {
           className="w-full border p-3 rounded mb-4 text-black"
           value={data}
           onChange={(e) =>
-            escolherData(e.target.value)
+            escolherData(
+              e.target.value
+            )
           }
-          disabled={agendamentoConfirmado}
+          disabled={
+            agendamentoConfirmado
+          }
         />
 
         {/* HORÁRIO */}
@@ -469,37 +957,38 @@ export default function AgendamentoForm() {
           className="w-full border p-3 rounded mb-4 text-black bg-white"
           value={horario}
           onChange={(e) =>
-            setHorario(e.target.value)
+            setHorario(
+              e.target.value
+            )
           }
-          disabled={agendamentoConfirmado}
+          disabled={
+            agendamentoConfirmado ||
+            !data ||
+            !servico
+          }
         >
           <option value="">
             Escolha um horário
           </option>
 
-          {horariosDisponiveis.map((hora) => {
-            const ocupado =
-              horariosOcupados.includes(hora);
-
-            return (
+          {horariosDisponiveis.map(
+            (hora) => (
               <option
                 key={hora}
                 value={hora}
-                disabled={ocupado}
               >
                 {hora}
-                {ocupado
-                  ? " - Ocupado"
-                  : ""}
               </option>
-            );
-          })}
+            )
+          )}
         </select>
 
-        {/* BOTÃO CONFIRMAR */}
+                {/* BOTÃO CONFIRMAR */}
 
         <button
-          onClick={confirmarAgendamento}
+          onClick={
+            confirmarAgendamento
+          }
           disabled={
             salvando ||
             agendamentoConfirmado
